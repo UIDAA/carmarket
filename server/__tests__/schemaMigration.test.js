@@ -217,6 +217,41 @@ describe('post-seed reconciliation of legacy "기본" cars', () => {
     expect(manufacturers[0].name).toBe('KG모빌리티');
   });
 
+  it('reconciles a renamed-brand legacy car in the real production order (migrate on empty catalog, then seed)', () => {
+    // 실제 앱은 항상 createDb() -> migrateLegacyCarsToTrims(빈 카탈로그) -> (별도로) seed() 순서다.
+    // 구 사명으로 된 legacy 차량이 먼저 마이그레이션되면 '쌍용'이라는 stub 제조사가 만들어지고,
+    // 그 다음 seed()가 'KG모빌리티'(name_legacy='쌍용')를 찾거나 만들려 한다 — 이 순서에서도
+    // 제조사가 중복되지 않고, 리컨실리에이션이 진짜 토레스 세대를 찾아내야 한다.
+    const db = createDb(':memory:');
+    db.prepare('INSERT INTO users (email, password_hash, nickname) VALUES (?, ?, ?)').run(
+      'seller3@test.com',
+      'hash',
+      '판매자3'
+    );
+    db.prepare(
+      `INSERT INTO cars (seller_id, title, brand, model, year, mileage, price, fuel_type, transmission, region, status)
+       VALUES (1, '구형 쌍용 매물', '쌍용', '토레스', 2022, 1, 1, '가솔린', '자동', '서울', '판매중')`
+    ).run();
+    migrateLegacyCarsToTrims(db); // 빈 카탈로그 상태에서 '쌍용' stub 제조사 생성
+
+    seed(db);
+    reconcileLegacyCars(db);
+
+    const manufacturers = db.prepare("SELECT * FROM manufacturers WHERE name = '쌍용' OR name_legacy = '쌍용'").all();
+    expect(manufacturers).toHaveLength(1);
+    expect(manufacturers[0].name).toBe('KG모빌리티');
+    expect(manufacturers[0].name_legacy).toBe('쌍용');
+
+    const car = db.prepare('SELECT trim_id FROM cars WHERE id = 1').get();
+    const model = db
+      .prepare('SELECT models.* FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
+      .get(car.trim_id);
+    expect(model.name).toBe('1세대'); // 실제 시드된 토레스 세대로 옮겨졌는지 확인
+
+    const fallbackCount = db.prepare("SELECT COUNT(*) AS c FROM models WHERE name = '기본'").get().c;
+    expect(fallbackCount).toBe(0);
+  });
+
   it('running seed + reconcile twice does not error or create duplicates', () => {
     const db = createDb(':memory:');
     insertLegacyCar(db, { brand: '현대', model: '아반떼', year: 2021, fuelType: '가솔린' });

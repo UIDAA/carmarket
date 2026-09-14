@@ -163,31 +163,51 @@ const CATALOG = [
 // 마이그레이션이 시드보다 먼저 도는 순서상, 시드 대상과 같은 이름의 제조사 stub이 findOrCreate로
 // 이미 만들어져 있을 수 있다(name_legacy 없음, sort_order=0인 채로). 그 경우 findOrCreate는 기존
 // row를 그대로 반환할 뿐 메타데이터를 갱신하지 않으므로, 시드가 의도한 값과 다르면 여기서 채워 넣는다.
+//
+// name만으로 찾으면 안 된다 — 레거시 매물의 brand가 구 사명(예: '쌍용')이었다면 마이그레이션이
+// '쌍용'이라는 별도 제조사 row를 이미 만들어 놨을 수 있고, 시드는 'KG모빌리티'(name_legacy='쌍용')를
+// 찾거나 만들려 한다. name과 name_legacy 양쪽으로, 시드의 현재 이름과 구 사명 양쪽을 대조해야
+// 같은 실체를 하나의 row로 합칠 수 있다(schema.js의 findOrCreateManufacturerForLegacyCar와 동일한 원리).
+function findExistingManufacturer(db, name, nameLegacy) {
+  const candidates = [name, nameLegacy].filter(Boolean);
+  const clause = candidates.map(() => '(name = ? OR name_legacy = ?)').join(' OR ');
+  const params = candidates.flatMap((c) => [c, c]);
+  return db.prepare(`SELECT * FROM manufacturers WHERE ${clause}`).get(...params);
+}
+
 function upsertManufacturer(db, manufacturerSeed, index) {
+  const name = manufacturerSeed.manufacturer;
   const desired = {
     name_legacy: manufacturerSeed.nameLegacy || null,
     is_domestic: 1,
     sort_order: index,
   };
-  const manufacturer = findOrCreate(
-    db,
-    'manufacturers',
-    { name: manufacturerSeed.manufacturer },
-    { name: manufacturerSeed.manufacturer, ...desired }
-  );
+
+  let manufacturer = findExistingManufacturer(db, name, desired.name_legacy);
+  if (!manufacturer) {
+    const result = db
+      .prepare('INSERT INTO manufacturers (name, name_legacy, is_domestic, sort_order) VALUES (?, ?, ?, ?)')
+      .run(name, desired.name_legacy, desired.is_domestic, desired.sort_order);
+    manufacturer = db.prepare('SELECT * FROM manufacturers WHERE id = ?').get(result.lastInsertRowid);
+  }
 
   const needsBackfill =
+    manufacturer.name !== name ||
     manufacturer.name_legacy !== desired.name_legacy ||
     manufacturer.is_domestic !== desired.is_domestic ||
     manufacturer.sort_order !== desired.sort_order;
   if (needsBackfill) {
-    db.prepare('UPDATE manufacturers SET name_legacy = ?, is_domestic = ?, sort_order = ? WHERE id = ?').run(
+    // 마이그레이션이 구 사명(예: '쌍용')으로 만들어 둔 row를 재사용하는 경우, name 자체도
+    // 시드가 의도한 정식 명칭(예: 'KG모빌리티')으로 함께 고쳐야 한다 — 안 그러면 name_legacy만
+    // 채워진 채 표시명이 구 사명으로 남아버린다.
+    db.prepare('UPDATE manufacturers SET name = ?, name_legacy = ?, is_domestic = ?, sort_order = ? WHERE id = ?').run(
+      name,
       desired.name_legacy,
       desired.is_domestic,
       desired.sort_order,
       manufacturer.id
     );
-    Object.assign(manufacturer, desired);
+    Object.assign(manufacturer, { name, ...desired });
   }
 
   return manufacturer;
