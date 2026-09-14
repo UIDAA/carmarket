@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { resolveImageUrl, type Car } from '../api/cars';
+import { formatRegistration } from '../utils/formatRegistration';
 
 interface Props {
   car: Car;
@@ -26,7 +27,7 @@ export default function CarCard({ car, favorited, onToggleFavorite }: Props) {
         <div style={{ padding: '14px 16px 18px' }}>
           <div style={{ fontWeight: 600, fontSize: 15 }}>{car.title}</div>
           <div style={{ color: 'var(--text-soft)', fontSize: 13, marginTop: 4 }}>
-            {car.year}년식 · {(car.mileage / 10000).toFixed(1)}만km · {car.fuel_type} · {car.region}
+            {formatRegistration(car)} · {(car.mileage / 10000).toFixed(1)}만km · {car.fuel_type} · {car.region}
           </div>
           <div className="display" style={{ fontWeight: 700, fontSize: 19, marginTop: 8 }}>
             {(car.price / 10000).toLocaleString()}만원

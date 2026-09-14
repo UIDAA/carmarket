@@ -5,6 +5,7 @@ import { addFavorite, listFavorites, removeFavorite } from '../api/favorites';
 import { createOrGetRoom } from '../api/chat';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
+import { formatRegistration } from '../utils/formatRegistration';
 
 export default function CarDetailPage() {
   const { id } = useParams();
@@ -103,7 +104,7 @@ export default function CarDetailPage() {
             <div className="card" style={{ padding: '4px 20px' }}>
               <div className="spec-row">
                 <span style={{ color: 'var(--text-soft)' }}>연식</span>
-                <span>{car.year}년</span>
+                <span>{formatRegistration(car)}</span>
               </div>
               <div className="spec-row">
                 <span style={{ color: 'var(--text-soft)' }}>주행거리</span>
