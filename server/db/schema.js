@@ -166,12 +166,27 @@ function migrateLegacyCarsToTrims(db) {
       )
       .get(modelGroup.id, car.year, car.year);
     if (!model) {
-      model = findOrCreate(
-        db,
-        'models',
-        { model_group_id: modelGroup.id, name: '기본' },
-        { model_group_id: modelGroup.id, name: '기본', powertrain: '일반', start_year: car.year, end_year: car.year }
-      );
+      // 범위에 안 맞으면 폴백 '기본' 모델을 쓴다. 이름만으로 찾아 범위를 넓혀야 한다 —
+      // findOrCreate로 바로 만들면 두 번째 이후 차량의 연식이 기존 '기본' 범위를 벗어나도
+      // 조용히 같은 row에 재사용되어 start_year/end_year가 실제보다 좁게 굳어버린다.
+      const existing = db
+        .prepare(`SELECT * FROM models WHERE model_group_id = ? AND name = ?`)
+        .get(modelGroup.id, '기본');
+      if (!existing) {
+        model = findOrCreate(
+          db,
+          'models',
+          { model_group_id: modelGroup.id, name: '기본' },
+          { model_group_id: modelGroup.id, name: '기본', powertrain: '일반', start_year: car.year, end_year: car.year }
+        );
+      } else {
+        const newStart = Math.min(existing.start_year, car.year);
+        const newEnd = existing.end_year === null ? null : Math.max(existing.end_year, car.year);
+        if (newStart !== existing.start_year || newEnd !== existing.end_year) {
+          db.prepare('UPDATE models SET start_year = ?, end_year = ? WHERE id = ?').run(newStart, newEnd, existing.id);
+        }
+        model = db.prepare('SELECT * FROM models WHERE id = ?').get(existing.id);
+      }
     }
 
     const trim = findOrCreate(

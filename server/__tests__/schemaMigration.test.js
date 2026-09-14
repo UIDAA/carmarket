@@ -107,4 +107,36 @@ describe('카탈로그 스키마', () => {
     expect(after.first_registered_year).toBe(before.first_registered_year);
     expect(after.first_registered_month).toBe(5); // 재실행이 수동으로 채운 값을 덮어쓰지 않음
   });
+
+  it('widens the fallback "기본" model range instead of leaving it stale when a later legacy car falls outside it', () => {
+    const db = createDb(':memory:');
+    db.prepare('INSERT INTO users (email, password_hash, nickname) VALUES (?, ?, ?)').run(
+      'seller@test.com',
+      'hash',
+      '판매자'
+    );
+    db.prepare(
+      `INSERT INTO cars (seller_id, title, brand, model, year, mileage, price, fuel_type, transmission, region, status)
+       VALUES (1, '매물1', '현대', '아반떼', 2019, 1, 1, '가솔린', '자동', '서울', '판매중')`
+    ).run();
+    db.prepare(
+      `INSERT INTO cars (seller_id, title, brand, model, year, mileage, price, fuel_type, transmission, region, status)
+       VALUES (1, '매물2', '현대', '아반떼', 2021, 1, 1, '가솔린', '자동', '서울', '판매중')`
+    ).run();
+
+    migrateLegacyCarsToTrims(db);
+
+    const car1 = db.prepare('SELECT trim_id FROM cars WHERE id = 1').get();
+    const car2 = db.prepare('SELECT trim_id FROM cars WHERE id = 2').get();
+    const model1 = db
+      .prepare('SELECT models.* FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
+      .get(car1.trim_id);
+    const model2 = db
+      .prepare('SELECT models.* FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
+      .get(car2.trim_id);
+
+    expect(model1.id).toBe(model2.id);
+    expect(model1.start_year).toBe(2019);
+    expect(model1.end_year).toBe(2021);
+  });
 });
