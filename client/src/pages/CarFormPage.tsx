@@ -3,25 +3,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { type CarInput, createCar, getCar, resolveImageUrl, updateCar } from '../api/cars';
 import { ApiError } from '../api/client';
 import Header from '../components/Header';
+import VehiclePicker, { type VehiclePickerValue } from '../components/VehiclePicker';
 
-const emptyForm: CarInput = {
-  title: '',
-  brand: '',
-  model: '',
-  year: new Date().getFullYear(),
-  mileage: 0,
-  price: 0,
-  fuelType: '가솔린',
-  transmission: '자동',
-  region: '',
-  description: '',
-};
+const CURRENT_YEAR = new Date().getFullYear();
 
 export default function CarFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
-  const [form, setForm] = useState<CarInput>(emptyForm);
+  const [vehicle, setVehicle] = useState<VehiclePickerValue>({});
+  const [firstRegisteredYear, setFirstRegisteredYear] = useState<number | ''>('');
+  const [firstRegisteredMonth, setFirstRegisteredMonth] = useState<number | ''>('');
+  const [modelYear, setModelYear] = useState<number | ''>('');
+  const [title, setTitle] = useState('');
+  const [mileage, setMileage] = useState(0);
+  const [price, setPrice] = useState(0);
+  const [region, setRegion] = useState('');
+  const [description, setDescription] = useState('');
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -30,25 +28,18 @@ export default function CarFormPage() {
   useEffect(() => {
     if (!id) return;
     getCar(id).then((car) => {
-      setForm({
-        title: car.title,
-        brand: car.brand,
-        model: car.model,
-        year: car.year,
-        mileage: car.mileage,
-        price: car.price,
-        fuelType: car.fuel_type,
-        transmission: car.transmission,
-        region: car.region,
-        description: car.description ?? '',
-      });
+      setTitle(car.title);
+      setMileage(car.mileage);
+      setPrice(car.price);
+      setRegion(car.region);
+      setDescription(car.description ?? '');
+      setVehicle({ trimId: car.trim_id, year: car.first_registered_year });
+      setFirstRegisteredYear(car.first_registered_year);
+      setFirstRegisteredMonth(car.first_registered_month ?? '');
+      setModelYear(car.model_year ?? '');
       setExistingImageUrl(car.image_url);
     });
   }, [id]);
-
-  function updateField<K extends keyof CarInput>(key: K, value: CarInput[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -59,8 +50,23 @@ export default function CarFormPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!vehicle.trimId || !firstRegisteredYear) {
+      setError('차종과 최초등록연도를 선택/입력해주세요.');
+      return;
+    }
+    const input: CarInput = {
+      title,
+      trimId: vehicle.trimId,
+      firstRegisteredYear: Number(firstRegisteredYear),
+      ...(firstRegisteredMonth ? { firstRegisteredMonth: Number(firstRegisteredMonth) } : {}),
+      ...(modelYear ? { modelYear: Number(modelYear) } : {}),
+      mileage,
+      price,
+      region,
+      description,
+      photo,
+    };
     try {
-      const input = { ...form, photo };
       const car = isEdit && id ? await updateCar(id, input) : await createCar(input);
       navigate(`/cars/${car.id}`);
     } catch (err) {
@@ -80,6 +86,49 @@ export default function CarFormPage() {
             {error}
           </p>
         )}
+
+        <div className="field">
+          <label>차종 선택</label>
+          <VehiclePicker value={vehicle} onChange={setVehicle} />
+        </div>
+
+        <div className="row2">
+          <div className="field">
+            <label htmlFor="field-first-registered-year">최초등록연도</label>
+            <input
+              id="field-first-registered-year"
+              className="input"
+              type="number"
+              min={1990}
+              max={CURRENT_YEAR}
+              value={firstRegisteredYear}
+              onChange={(e) => setFirstRegisteredYear(e.target.value ? Number(e.target.value) : '')}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="field-first-registered-month">최초등록월 (선택)</label>
+            <input
+              id="field-first-registered-month"
+              className="input"
+              type="number"
+              min={1}
+              max={12}
+              value={firstRegisteredMonth}
+              onChange={(e) => setFirstRegisteredMonth(e.target.value ? Number(e.target.value) : '')}
+            />
+          </div>
+        </div>
+        <div className="field">
+          <label htmlFor="field-model-year">연형 (선택, 최초등록연도와 다를 때만)</label>
+          <input
+            id="field-model-year"
+            className="input"
+            type="number"
+            value={modelYear}
+            onChange={(e) => setModelYear(e.target.value ? Number(e.target.value) : '')}
+          />
+        </div>
 
         <div className="field">
           <label htmlFor="photo">매물 사진</label>
@@ -119,50 +168,15 @@ export default function CarFormPage() {
           </div>
         </div>
 
-        <div className="row2">
-          <div className="field">
-            <label htmlFor="field-title">제목</label>
-            <input
-              id="field-title"
-              className="input"
-              value={form.title}
-              onChange={(e) => updateField('title', e.target.value)}
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="field-brand">브랜드</label>
-            <input
-              id="field-brand"
-              className="input"
-              value={form.brand}
-              onChange={(e) => updateField('brand', e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <div className="row2">
-          <div className="field">
-            <label htmlFor="field-model">모델명</label>
-            <input
-              id="field-model"
-              className="input"
-              value={form.model}
-              onChange={(e) => updateField('model', e.target.value)}
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="field-year">연식</label>
-            <input
-              id="field-year"
-              className="input"
-              type="number"
-              value={form.year}
-              onChange={(e) => updateField('year', Number(e.target.value))}
-              required
-            />
-          </div>
+        <div className="field">
+          <label htmlFor="field-title">제목</label>
+          <input
+            id="field-title"
+            className="input"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
         </div>
         <div className="row2">
           <div className="field">
@@ -171,8 +185,8 @@ export default function CarFormPage() {
               id="field-mileage"
               className="input"
               type="number"
-              value={form.mileage}
-              onChange={(e) => updateField('mileage', Number(e.target.value))}
+              value={mileage}
+              onChange={(e) => setMileage(Number(e.target.value))}
               required
             />
           </div>
@@ -182,39 +196,10 @@ export default function CarFormPage() {
               id="field-price"
               className="input"
               type="number"
-              value={form.price}
-              onChange={(e) => updateField('price', Number(e.target.value))}
+              value={price}
+              onChange={(e) => setPrice(Number(e.target.value))}
               required
             />
-          </div>
-        </div>
-        <div className="row2">
-          <div className="field">
-            <label htmlFor="field-fuelType">연료</label>
-            <select
-              id="field-fuelType"
-              className="input"
-              value={form.fuelType}
-              onChange={(e) => updateField('fuelType', e.target.value)}
-            >
-              <option value="가솔린">가솔린</option>
-              <option value="디젤">디젤</option>
-              <option value="하이브리드">하이브리드</option>
-              <option value="전기">전기</option>
-              <option value="LPG">LPG</option>
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="field-transmission">변속기</label>
-            <select
-              id="field-transmission"
-              className="input"
-              value={form.transmission}
-              onChange={(e) => updateField('transmission', e.target.value)}
-            >
-              <option value="자동">자동</option>
-              <option value="수동">수동</option>
-            </select>
           </div>
         </div>
         <div className="field">
@@ -222,8 +207,8 @@ export default function CarFormPage() {
           <input
             id="field-region"
             className="input"
-            value={form.region}
-            onChange={(e) => updateField('region', e.target.value)}
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
             required
           />
         </div>
@@ -234,8 +219,8 @@ export default function CarFormPage() {
             className="input"
             rows={5}
             style={{ resize: 'vertical' }}
-            value={form.description}
-            onChange={(e) => updateField('description', e.target.value)}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </div>
 
