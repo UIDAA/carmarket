@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    :root{
+      --bg:#FAF8F5; --surface:#FFFFFF; --border:#E6E1D8; --text:#221D18; --text-soft:#7A7267;
+      --accent:#D9622B; --accent-dark:#B94F1F; --radius:10px; --radius-sm:8px;
+      --shadow:0 1px 2px rgba(34,29,24,0.06), 0 1px 1px rgba(34,29,24,0.04);
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,sans-serif;}
+    h1,h2,h3,.display{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;}
+    a{color:var(--accent);text-decoration:none;}
+    label{display:block;font-size:13px;font-weight:600;color:var(--text-soft);margin-bottom:6px;}
+    .field{margin-bottom:16px;}
+    .input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;}
+    .input:focus{outline:none;border-color:var(--accent);}
+    .btn-primary{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:14px;font-size:15px;font-weight:600;cursor:pointer;}
+    .btn-primary:hover{background:var(--accent-dark);}
+    .tab{flex:1;text-align:center;padding:12px;font-size:14px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;border:none;font-family:inherit;}
+  </style>
+</helmet>
+
+<div style="min-height:900px;display:flex;align-items:center;justify-content:center;">
+  <div style="width:420px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 32px rgba(34,29,24,0.08);padding:36px;">
+
+    <div style="text-align:center;margin-bottom:24px;">
+      <div class="display" style="font-size:22px;font-weight:700;color:var(--accent);">중고차마당</div>
+    </div>
+
+    <div style="display:flex;gap:6px;background:var(--bg);border-radius:var(--radius-sm);padding:4px;margin-bottom:24px;">
+      <button class="tab" style="background:{{loginTabBg}};color:{{loginTabColor}};" onClick="{{showLogin}}">로그인</button>
+      <button class="tab" style="background:{{registerTabBg}};color:{{registerTabColor}};" onClick="{{showRegister}}">회원가입</button>
+    </div>
+
+    <sc-if value="{{isLogin}}" hint-placeholder-val="{{true}}">
+      <div class="field"><label>이메일</label><input class="input" placeholder="you@example.com"></div>
+      <div class="field"><label>비밀번호</label><input class="input" type="password" placeholder="••••••••"></div>
+      <button class="btn-primary">로그인</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-soft);">
+        계정이 없으신가요? <a href="#" onClick="{{showRegister}}">회원가입</a>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isRegister}}" hint-placeholder-val="{{false}}">
+      <div class="field"><label>이메일</label><input class="input" placeholder="you@example.com"></div>
+      <div class="field"><label>닉네임</label><input class="input" placeholder="닉네임을 입력하세요"></div>
+      <div class="field"><label>비밀번호</label><input class="input" type="password" placeholder="••••••••"></div>
+      <div class="field"><label>비밀번호 확인</label><input class="input" type="password" placeholder="••••••••"></div>
+      <button class="btn-primary">회원가입</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-soft);">
+        이미 계정이 있으신가요? <a href="#" onClick="{{showLogin}}">로그인</a>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'login' };
+  }
+
+  renderVals() {
+    const isLogin = this.state.tab === 'login';
+    return {
+      isLogin,
+      isRegister: !isLogin,
+      loginTabBg: isLogin ? '#FFFFFF' : 'transparent',
+      loginTabColor: isLogin ? '#D9622B' : '#7A7267',
+      registerTabBg: !isLogin ? '#FFFFFF' : 'transparent',
+      registerTabColor: !isLogin ? '#D9622B' : '#7A7267',
+      showLogin: () => this.setState({ tab: 'login' }),
+      showRegister: () => this.setState({ tab: 'register' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

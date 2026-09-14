@@ -1,0 +1,11 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1280, "h": 1500, "title": "매물 목록" },
+    { "file": "CarDetail.dc.html", "x": 1360, "y": 0, "w": 1280, "h": 1500, "title": "매물 상세" },
+    { "file": "CarForm.dc.html", "x": 2720, "y": 0, "w": 1280, "h": 1400, "title": "매물 등록" },
+    { "file": "Auth.dc.html", "x": 0, "y": 1650, "w": 1280, "h": 900, "title": "로그인 / 회원가입" },
+    { "file": "MyPage.dc.html", "x": 1360, "y": 1650, "w": 1280, "h": 1200, "title": "마이페이지" },
+    { "file": "ChatRoom.dc.html", "x": 2720, "y": 1650, "w": 1280, "h": 900, "title": "채팅방" }
+  ],
+  "launch": { "view": "canvas" }
+}

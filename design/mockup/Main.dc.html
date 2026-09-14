@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    :root{
+      --bg:#FAF8F5; --surface:#FFFFFF; --border:#E6E1D8; --text:#221D18; --text-soft:#7A7267;
+      --accent:#D9622B; --accent-dark:#B94F1F; --accent-soft:#FCEEE4;
+      --success:#2F7D5C; --success-soft:#E7F3EC; --warn:#B7791F; --warn-soft:#FBF0DC;
+      --muted:#9C9488; --muted-soft:#F1EFEA; --radius:10px; --radius-sm:8px;
+      --shadow:0 1px 2px rgba(34,29,24,0.06), 0 1px 1px rgba(34,29,24,0.04);
+    }
+    *{box-sizing:border-box;}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,sans-serif;}
+    h1,h2,h3,.display{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;}
+    a{color:var(--accent);text-decoration:none;}
+    a:hover{color:var(--accent-dark);}
+    button{font-family:inherit;cursor:pointer;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:500;}
+    .chip:hover{border-color:var(--accent);color:var(--accent-dark);}
+    .btn-primary{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:14px;font-weight:600;}
+    .btn-primary:hover{background:var(--accent-dark);}
+    .nav-link{font-size:14px;font-weight:500;color:var(--text);}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .15s;}
+    .card:hover{box-shadow:0 6px 20px rgba(34,29,24,0.08);}
+    .fav-btn{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:999px;border:none;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
+  </style>
+</helmet>
+
+<div style="min-height:1500px;display:flex;flex-direction:column;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid var(--border);background:var(--surface);">
+    <div class="display" style="font-size:22px;font-weight:700;color:var(--accent);">중고차마당</div>
+    <div style="display:flex;align-items:center;gap:28px;">
+      <a class="nav-link" href="#">찜한 매물</a>
+      <div style="position:relative;">
+        <a class="nav-link" href="#">채팅</a>
+        <div style="position:absolute;top:-8px;right:-14px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:999px;display:flex;align-items:center;justify-content:center;">2</div>
+      </div>
+      <div style="width:34px;height:34px;border-radius:999px;background:var(--muted-soft);display:flex;align-items:center;justify-content:center;color:var(--text-soft);font-weight:600;font-size:13px;">김</div>
+      <button class="btn-primary" style="display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        매물 등록
+      </button>
+    </div>
+  </div>
+
+  <!-- Search / filter panel -->
+  <div style="padding:28px 48px 0;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;">
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-soft)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span style="color:var(--text-soft);font-size:14px;">차종, 모델명으로 검색</span>
+        </div>
+        <button class="btn-primary">검색</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button class="chip">브랜드 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <button class="chip">가격대 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <button class="chip">연식 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <button class="chip">지역 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <button class="chip">연료 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results bar -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 48px 0;">
+    <div style="color:var(--text-soft);font-size:14px;">전체 <strong style="color:var(--text);">128</strong>건</div>
+    <button class="chip">최신순 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+  </div>
+
+  <!-- Grid -->
+  <div style="padding:16px 48px 48px;display:grid;grid-template-columns:repeat(3, 1fr);gap:24px;">
+    <sc-for list="{{listings}}" as="item" hint-placeholder-count="9">
+      <div class="card">
+        <div style="position:relative;width:100%;height:200px;background:{{item.thumbBg}};display:flex;align-items:center;justify-content:center;">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2" y="13" width="20" height="5" rx="1.5"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>
+          <div style="position:absolute;top:12px;left:12px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;background:{{item.badgeBg}};color:{{item.badgeColor}};">{{item.statusLabel}}</div>
+          <button class="fav-btn" onClick="{{item.toggleFav}}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="{{item.heartFill}}" stroke="{{item.heartColor}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2 4.8 5.6 4.1c2-.4 4 .5 5.4 2.4C12.4 4.6 14.4 3.7 16.4 4.1 20 4.8 21.5 8.4 22 11.7 19.5 16.4 12 21 12 21z"/></svg>
+          </button>
+        </div>
+        <div style="padding:14px 16px 18px;">
+          <div style="font-weight:600;font-size:15px;">{{item.title}}</div>
+          <div style="color:var(--text-soft);font-size:13px;margin-top:4px;">{{item.spec}}</div>
+          <div class="display" style="font-weight:700;font-size:19px;margin-top:8px;">{{item.price}}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#D9622B"}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { favIds: { 2: true, 9: true } };
+  }
+
+  renderVals() {
+    const accent = this.props.accent ?? '#D9622B';
+    const raw = [
+      { id: 1, title: '2021 아반떼 CN7 스마트', spec: '2021년식 · 3.2만km · 가솔린 · 서울 강남구', price: '1,680만원', status: 'active', thumbBg: 'linear-gradient(135deg,#D9622B,#B94F1F)' },
+      { id: 2, title: '2019 소나타 DN8 프리미엄', spec: '2019년식 · 5.8만km · 가솔린 · 경기 성남시', price: '1,350만원', status: 'active', thumbBg: 'linear-gradient(135deg,#8B7B6A,#6B5D4F)' },
+      { id: 3, title: '2022 K5 3세대 노블레스', spec: '2022년식 · 1.4만km · 하이브리드 · 서울 송파구', price: '2,290만원', status: 'reserved', thumbBg: 'linear-gradient(135deg,#4C6B5C,#334A3E)' },
+      { id: 4, title: '2018 그랜저 IG', spec: '2018년식 · 8.9만km · LPG · 인천 남동구', price: '1,190만원', status: 'active', thumbBg: 'linear-gradient(135deg,#5B6B7A,#3E4A56)' },
+      { id: 5, title: '2020 티볼리 아머', spec: '2020년식 · 4.1만km · 디젤 · 대전 유성구', price: '1,450만원', status: 'active', thumbBg: 'linear-gradient(135deg,#A2745A,#7A5640)' },
+      { id: 6, title: '2017 스포티지 QL', spec: '2017년식 · 9.6만km · 디젤 · 부산 해운대구', price: '990만원', status: 'sold', thumbBg: 'linear-gradient(135deg,#9C9488,#7A7267)' },
+      { id: 7, title: '2023 모닝 어반', spec: '2023년식 · 0.6만km · 가솔린 · 서울 마포구', price: '1,190만원', status: 'active', thumbBg: 'linear-gradient(135deg,#C97A4A,#A15C33)' },
+      { id: 8, title: '2019 QM6 프리미어', spec: '2019년식 · 6.3만km · 가솔린 · 광주 서구', price: '1,590만원', status: 'active', thumbBg: 'linear-gradient(135deg,#6B7D8C,#4A5866)' },
+      { id: 9, title: '2021 카니발 4세대 노블레스', spec: '2021년식 · 3.9만km · 디젤 · 경기 수원시', price: '2,980만원', status: 'reserved', thumbBg: 'linear-gradient(135deg,#736357,#524539)' },
+    ];
+
+    const statusMap = {
+      active: { label: '판매중', bg: '#E7F3EC', color: '#2F7D5C' },
+      reserved: { label: '예약중', bg: '#FBF0DC', color: '#B7791F' },
+      sold: { label: '거래완료', bg: '#F1EFEA', color: '#9C9488' },
+    };
+
+    const listings = raw.map((item) => {
+      const favorited = !!this.state.favIds[item.id];
+      const s = statusMap[item.status];
+      return {
+        ...item,
+        statusLabel: s.label,
+        badgeBg: s.bg,
+        badgeColor: s.color,
+        heartFill: favorited ? accent : 'none',
+        heartColor: favorited ? accent : '#B9AFA0',
+        toggleFav: () => {
+          const next = { ...this.state.favIds };
+          if (next[item.id]) delete next[item.id];
+          else next[item.id] = true;
+          this.setState({ favIds: next });
+        },
+      };
+    });
+
+    return { listings, accent };
+  }
+}
+</script>
+</body>
+</html>

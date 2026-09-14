@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.log
+.DS_Store
+*.local
+
+server/db/*.sqlite
+server/uploads/*
+!server/uploads/.gitkeep
