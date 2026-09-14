@@ -68,4 +68,62 @@ describe('GET /api/cars/search facets', () => {
     const matchingBucket = res.body.facets.priceBuckets.find((b) => b.min <= 5000000 && (b.max === null || b.max > 5000000));
     expect(matchingBucket.count).toBeGreaterThanOrEqual(1);
   });
+
+  it('returns a non-null models facet with correct counts when manufacturerId and modelGroupId are both set', async () => {
+    const { app, db } = buildTestApp();
+    const cn7 = seedTrim(db); // 현대/아반떼/CN7
+    const ad = seedTrim(db, { modelName: 'AD', startYear: 2015, endYear: 2019 }); // 같은 제조사/차종그룹, 다른 모델
+    const token = await registerAndLogin(app);
+    await postCar(app, token, cn7.trimId, { firstRegisteredYear: 2021 });
+    await postCar(app, token, ad.trimId, { firstRegisteredYear: 2016 });
+
+    const res = await request(app)
+      .get('/api/cars/search')
+      .query({ manufacturerId: cn7.manufacturerId, modelGroupId: cn7.modelGroupId });
+
+    expect(res.status).toBe(200); // 이전에는 model_groups 조인 누락으로 500(SqliteError)이 났다
+    expect(res.body.facets.models).not.toBeNull();
+    const cn7Count = res.body.facets.models.find((m) => m.id === cn7.modelId).count;
+    const adCount = res.body.facets.models.find((m) => m.id === ad.modelId).count;
+    expect(cn7Count).toBe(1);
+    expect(adCount).toBe(1);
+  });
+
+  it('returns a non-null trims facet with correct counts when manufacturerId, modelGroupId and modelId are all set', async () => {
+    const { app, db } = buildTestApp();
+    const gasolineTrim = seedTrim(db, { trimName: '가솔린 1.6 스마트' });
+    const dieselTrim = seedTrim(db, { trimName: '디젤 1.6 프리미엄', fuelType: '디젤' }); // 같은 모델, 다른 트림
+    const token = await registerAndLogin(app);
+    await postCar(app, token, gasolineTrim.trimId);
+    await postCar(app, token, dieselTrim.trimId);
+
+    const res = await request(app).get('/api/cars/search').query({
+      manufacturerId: gasolineTrim.manufacturerId,
+      modelGroupId: gasolineTrim.modelGroupId,
+      modelId: gasolineTrim.modelId,
+    });
+
+    expect(res.status).toBe(200); // 이전에는 models/model_groups 조인 누락으로 500(SqliteError)이 났다
+    expect(res.body.facets.trims).not.toBeNull();
+    const gasolineCount = res.body.facets.trims.find((t) => t.id === gasolineTrim.trimId).count;
+    const dieselCount = res.body.facets.trims.find((t) => t.id === dieselTrim.trimId).count;
+    expect(gasolineCount).toBe(1);
+    expect(dieselCount).toBe(1);
+  });
+
+  it('keeps the region facet correct when combined with a catalog filter (manufacturerId)', async () => {
+    const { app, db } = buildTestApp();
+    const { manufacturerId, trimId } = seedTrim(db);
+    const token = await registerAndLogin(app);
+    await postCar(app, token, trimId, { region: '서울' });
+    await postCar(app, token, trimId, { region: '부산' });
+
+    const res = await request(app).get('/api/cars/search').query({ manufacturerId });
+
+    expect(res.status).toBe(200); // 이전에는 region 파셋의 ON절이 model_groups를 오른쪽에서 참조해 500(SqliteError)이 났다
+    const seoulCount = res.body.facets.region.find((r) => r.value === '서울').count;
+    const busanCount = res.body.facets.region.find((r) => r.value === '부산').count;
+    expect(seoulCount).toBe(1);
+    expect(busanCount).toBe(1);
+  });
 });
