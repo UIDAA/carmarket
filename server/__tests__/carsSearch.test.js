@@ -84,3 +84,44 @@ describe('GET /api/cars/search', () => {
     expect(res.body.page).toBe(2);
   });
 });
+
+describe('GET /api/cars/search malformed query params', () => {
+  it('falls back to the default sort instead of 500ing on a prototype-shaped ?sort value', async () => {
+    const { app, db } = buildTestApp();
+    const { trimId } = seedTrim(db);
+    const token = await registerAndLogin(app);
+    await postCar(app, token, trimId);
+
+    const res = await request(app).get('/api/cars/search?sort=constructor');
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+  });
+
+  it('does not crash on a repeated query param (?fuel=a&fuel=b) — treats the array as absent', async () => {
+    const { app, db } = buildTestApp();
+    const { trimId } = seedTrim(db, { fuelType: '가솔린' });
+    const token = await registerAndLogin(app);
+    await postCar(app, token, trimId);
+
+    // supertest/superagent 자체가 배열 쿼리를 리터럴 문자열로 인코딩해 보내므로,
+    // 실제 리퀘스트 문자열을 직접 구성해 Express의 기본 파서가 배열로 파싱하게 만든다.
+    const res = await request(app).get('/api/cars/search?fuel=가솔린&fuel=디젤');
+    expect(res.status).toBe(200);
+    // 배열은 스칼라가 아니므로 필터가 없는 것으로 취급되어야 한다 — 크래시하지 않고,
+    // 두 연료 모두 필터링 없이 결과에 포함된다(여기서는 가솔린 매물 1건).
+    expect(res.body.total).toBe(1);
+  });
+
+  it('ignores a bracket-nested malformed param (?priceMin[x]=1) instead of silently mis-filtering', async () => {
+    const { app, db } = buildTestApp();
+    const { trimId } = seedTrim(db);
+    const token = await registerAndLogin(app);
+    await postCar(app, token, trimId, { price: 5000000 });
+
+    const res = await request(app).get('/api/cars/search?priceMin[x]=1');
+    expect(res.status).toBe(200);
+    // priceMin이 객체로 파싱되어도 필터가 없는 것처럼 무시되어야 한다 — 잘못 바인딩되어
+    // 빈 결과가 나오면 안 된다.
+    expect(res.body.total).toBe(1);
+  });
+});

@@ -29,58 +29,86 @@ const MILEAGE_BUCKETS = [
   { label: '10만km 이상', min: 100000, max: null },
 ];
 
+// Express의 기본 query 파서는 반복된 파라미터(?fuel=a&fuel=b)를 배열로, 대괄호 중첩
+// (?priceMin[x]=1)을 객체로 만든다. 둘 다 스칼라가 아니므로 "없는 값"으로 취급해 버린다 —
+// 그대로 두면 배열/객체가 SQL 파라미터로 바인딩되며 에러가 나거나(문자열 필터), 진실같은 객체가
+// truthy 체크를 통과해 잘못된/빈 결과를 조용히 만들어낸다(숫자 필터).
+function asScalar(value) {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function asNumberOrUndefined(value) {
+  const scalar = asScalar(value);
+  if (scalar === undefined) return undefined;
+  const num = Number(scalar);
+  return Number.isNaN(num) ? undefined : num;
+}
+
 function buildSearchConditions(filters, excludeKeys = []) {
   const exclude = new Set(excludeKeys);
   const conditions = [`cars.status IN ${ACTIVE_STATUSES}`];
   const params = [];
 
-  if (filters.manufacturerId && !exclude.has('manufacturerId')) {
+  const manufacturerId = asNumberOrUndefined(filters.manufacturerId);
+  const modelGroupId = asNumberOrUndefined(filters.modelGroupId);
+  const modelId = asNumberOrUndefined(filters.modelId);
+  const trimId = asNumberOrUndefined(filters.trimId);
+  const yearFrom = asNumberOrUndefined(filters.yearFrom);
+  const yearTo = asNumberOrUndefined(filters.yearTo);
+  const fuel = asScalar(filters.fuel);
+  const priceMin = asNumberOrUndefined(filters.priceMin);
+  const priceMax = asNumberOrUndefined(filters.priceMax);
+  const mileageMin = asNumberOrUndefined(filters.mileageMin);
+  const mileageMax = asNumberOrUndefined(filters.mileageMax);
+  const region = asScalar(filters.region);
+
+  if (manufacturerId !== undefined && !exclude.has('manufacturerId')) {
     conditions.push('model_groups.manufacturer_id = ?');
-    params.push(Number(filters.manufacturerId));
+    params.push(manufacturerId);
   }
-  if (filters.modelGroupId && !exclude.has('modelGroupId')) {
+  if (modelGroupId !== undefined && !exclude.has('modelGroupId')) {
     conditions.push('models.model_group_id = ?');
-    params.push(Number(filters.modelGroupId));
+    params.push(modelGroupId);
   }
-  if (filters.modelId && !exclude.has('modelId')) {
+  if (modelId !== undefined && !exclude.has('modelId')) {
     conditions.push('trims.model_id = ?');
-    params.push(Number(filters.modelId));
+    params.push(modelId);
   }
-  if (filters.trimId && !exclude.has('trimId')) {
+  if (trimId !== undefined && !exclude.has('trimId')) {
     conditions.push('cars.trim_id = ?');
-    params.push(Number(filters.trimId));
+    params.push(trimId);
   }
-  if (filters.yearFrom && !exclude.has('year')) {
+  if (yearFrom !== undefined && !exclude.has('year')) {
     conditions.push('cars.first_registered_year >= ?');
-    params.push(Number(filters.yearFrom));
+    params.push(yearFrom);
   }
-  if (filters.yearTo && !exclude.has('year')) {
+  if (yearTo !== undefined && !exclude.has('year')) {
     conditions.push('cars.first_registered_year <= ?');
-    params.push(Number(filters.yearTo));
+    params.push(yearTo);
   }
-  if (filters.fuel && !exclude.has('fuel')) {
+  if (fuel && !exclude.has('fuel')) {
     conditions.push('cars.fuel_type = ?');
-    params.push(filters.fuel);
+    params.push(fuel);
   }
-  if (filters.priceMin && !exclude.has('price')) {
+  if (priceMin !== undefined && !exclude.has('price')) {
     conditions.push('cars.price >= ?');
-    params.push(Number(filters.priceMin));
+    params.push(priceMin);
   }
-  if (filters.priceMax && !exclude.has('price')) {
+  if (priceMax !== undefined && !exclude.has('price')) {
     conditions.push('cars.price <= ?');
-    params.push(Number(filters.priceMax));
+    params.push(priceMax);
   }
-  if (filters.mileageMin && !exclude.has('mileage')) {
+  if (mileageMin !== undefined && !exclude.has('mileage')) {
     conditions.push('cars.mileage >= ?');
-    params.push(Number(filters.mileageMin));
+    params.push(mileageMin);
   }
-  if (filters.mileageMax && !exclude.has('mileage')) {
+  if (mileageMax !== undefined && !exclude.has('mileage')) {
     conditions.push('cars.mileage <= ?');
-    params.push(Number(filters.mileageMax));
+    params.push(mileageMax);
   }
-  if (filters.region && !exclude.has('region')) {
+  if (region && !exclude.has('region')) {
     conditions.push('cars.region = ?');
-    params.push(filters.region);
+    params.push(region);
   }
 
   return { conditions, params };
@@ -243,10 +271,14 @@ function carsRouter(db) {
       mileage_asc: 'cars.mileage ASC',
       year_desc: 'cars.first_registered_year DESC',
     };
-    const orderBy = sortMap[filters.sort] || sortMap.latest;
+    const sortKey = asScalar(filters.sort);
+    const orderBy =
+      sortKey !== undefined && Object.prototype.hasOwnProperty.call(sortMap, sortKey)
+        ? sortMap[sortKey]
+        : sortMap.latest;
 
-    const page = Math.max(1, Number(filters.page) || 1);
-    const pageSize = Math.min(100, Math.max(1, Number(filters.pageSize) || 20));
+    const page = Math.max(1, asNumberOrUndefined(filters.page) ?? 1);
+    const pageSize = Math.min(100, Math.max(1, asNumberOrUndefined(filters.pageSize) ?? 20));
     const offset = (page - 1) * pageSize;
 
     const total = db.prepare(`SELECT COUNT(*) AS c ${FROM_CLAUSE} ${where}`).get(...params).c;
