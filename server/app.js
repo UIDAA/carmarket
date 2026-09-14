@@ -5,6 +5,7 @@ const { authRouter } = require('./routes/auth');
 const { carsRouter } = require('./routes/cars');
 const { favoritesRouter } = require('./routes/favorites');
 const { chatRouter } = require('./routes/chat');
+const { catalogRouter } = require('./routes/catalog');
 const { errorHandler } = require('./middleware/errorHandler');
 
 function createApp(db) {
@@ -19,6 +20,7 @@ function createApp(db) {
   app.use('/api/cars', carsRouter(db));
   app.use('/api/favorites', favoritesRouter(db));
   app.use('/api/chat', chatRouter(db));
+  app.use('/api/catalog', catalogRouter(db));
 
   app.use(errorHandler);
 
