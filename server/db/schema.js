@@ -1,4 +1,5 @@
 const Database = require('better-sqlite3');
+const { findOrCreate } = require('./findOrCreate');
 
 function createDb(path = `${__dirname}/carmarket.sqlite`) {
   const db = new Database(path);
@@ -132,26 +133,20 @@ function createDb(path = `${__dirname}/carmarket.sqlite`) {
   return db;
 }
 
-function findOrCreate(db, table, whereCols, insertCols) {
-  const whereClause = Object.keys(whereCols)
-    .map((col) => `${col} = ?`)
-    .join(' AND ');
-  const existing = db.prepare(`SELECT * FROM ${table} WHERE ${whereClause}`).get(...Object.values(whereCols));
+// 레거시 차량의 brand 텍스트가 어떤 제조사의 현재 name과도, 구 사명(name_legacy)과도 일치하면
+// 그 row를 재사용한다 — name만 보면 seed가 만든 정식 row(name_legacy로 구 사명을 들고 있는)를
+// 놔두고 구 사명 그대로의 중복 제조사를 새로 만들어버린다.
+function findOrCreateManufacturerForLegacyCar(db, brand) {
+  const existing = db.prepare('SELECT * FROM manufacturers WHERE name = ? OR name_legacy = ?').get(brand, brand);
   if (existing) return existing;
-
-  const cols = Object.keys(insertCols);
-  const placeholders = cols.map(() => '?').join(', ');
-  const result = db
-    .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`)
-    .run(...Object.values(insertCols));
-  return db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid);
+  return findOrCreate(db, 'manufacturers', { name: brand }, { name: brand });
 }
 
 function migrateLegacyCarsToTrims(db) {
   const legacyCars = db.prepare('SELECT * FROM cars WHERE trim_id IS NULL').all();
 
   for (const car of legacyCars) {
-    const manufacturer = findOrCreate(db, 'manufacturers', { name: car.brand }, { name: car.brand });
+    const manufacturer = findOrCreateManufacturerForLegacyCar(db, car.brand);
     const modelGroup = findOrCreate(
       db,
       'model_groups',

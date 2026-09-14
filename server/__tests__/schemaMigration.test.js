@@ -1,4 +1,5 @@
 const { createDb, migrateLegacyCarsToTrims } = require('../db/schema');
+const { seed, reconcileLegacyCars } = require('../db/seed');
 
 describe('카탈로그 스키마', () => {
   it('creates catalog tables and the new nullable columns', () => {
@@ -138,5 +139,112 @@ describe('카탈로그 스키마', () => {
     expect(model1.id).toBe(model2.id);
     expect(model1.start_year).toBe(2019);
     expect(model1.end_year).toBe(2021);
+  });
+});
+
+describe('post-seed reconciliation of legacy "기본" cars', () => {
+  function insertLegacyCar(db, overrides = {}) {
+    db.prepare('INSERT INTO users (email, password_hash, nickname) VALUES (?, ?, ?)').run(
+      overrides.email || 'seller@test.com',
+      'hash',
+      '판매자'
+    );
+    db.prepare(
+      `INSERT INTO cars (seller_id, title, brand, model, year, mileage, price, fuel_type, transmission, region, status)
+       VALUES (1, ?, ?, ?, ?, 1, 1, ?, '자동', '서울', '판매중')`
+    ).run(
+      overrides.title || '레거시 매물',
+      overrides.brand || '현대',
+      overrides.model || '아반떼',
+      overrides.year || 2021,
+      overrides.fuelType || '가솔린'
+    );
+  }
+
+  it('repoints a car stuck on the "기본" fallback to the real generation once seeded, and drops the empty fallback', () => {
+    // createDb()가 항상 migrateLegacyCarsToTrims를 먼저 돌리므로, 시드가 없는 상태에서
+    // legacy 차량을 넣으면 실제 CN7 세대가 아니라 폴백 '기본' 모델에 붙는다.
+    const db = createDb(':memory:');
+    insertLegacyCar(db, { brand: '현대', model: '아반떼', year: 2021, fuelType: '가솔린' });
+    // createDb()의 자동 마이그레이션은 이 차량이 들어오기 전에 이미 끝났으므로, 실제 앱 재시작 시
+    // 벌어지는 상황(카탈로그가 비어있는 채로 레거시 차량을 마이그레이션)을 재현하려면 직접 한 번 더 돌린다.
+    migrateLegacyCarsToTrims(db);
+
+    const beforeModel = db
+      .prepare(
+        `SELECT models.* FROM cars
+         JOIN trims ON trims.id = cars.trim_id
+         JOIN models ON models.id = trims.model_id
+         WHERE cars.id = 1`
+      )
+      .get();
+    expect(beforeModel.name).toBe('기본');
+
+    // 시드 + 리컨실리에이션을 돌리면 실제 CN7 세대(2020~)로 옮겨져야 한다.
+    seed(db);
+    reconcileLegacyCars(db);
+
+    const afterCar = db.prepare('SELECT trim_id FROM cars WHERE id = 1').get();
+    const afterModel = db
+      .prepare('SELECT models.* FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
+      .get(afterCar.trim_id);
+    expect(afterModel.name).toBe('CN7');
+
+    const fallbackModelCount = db.prepare("SELECT COUNT(*) AS c FROM models WHERE name = '기본'").get().c;
+    expect(fallbackModelCount).toBe(0);
+  });
+
+  it('reuses an existing manufacturer by name_legacy instead of creating a duplicate', () => {
+    const db = createDb(':memory:');
+    // 먼저 시드를 돌려 KG모빌리티(name_legacy='쌍용')를 만들어둔다.
+    seed(db);
+
+    // 이제 구 사명 '쌍용'으로 된 legacy 차량을 새로 넣고 마이그레이션을 직접 재실행한다.
+    db.prepare('INSERT INTO users (email, password_hash, nickname) VALUES (?, ?, ?)').run(
+      'seller2@test.com',
+      'hash',
+      '판매자2'
+    );
+    db.prepare(
+      `INSERT INTO cars (seller_id, title, brand, model, year, mileage, price, fuel_type, transmission, region, status)
+       VALUES (1, '구형 매물', '쌍용', '토레스', 2022, 1, 1, '가솔린', '자동', '서울', '판매중')`
+    ).run();
+
+    migrateLegacyCarsToTrims(db);
+
+    const manufacturers = db.prepare("SELECT * FROM manufacturers WHERE name = '쌍용' OR name_legacy = '쌍용'").all();
+    expect(manufacturers).toHaveLength(1);
+    expect(manufacturers[0].name).toBe('KG모빌리티');
+  });
+
+  it('running seed + reconcile twice does not error or create duplicates', () => {
+    const db = createDb(':memory:');
+    insertLegacyCar(db, { brand: '현대', model: '아반떼', year: 2021, fuelType: '가솔린' });
+    migrateLegacyCarsToTrims(db);
+
+    seed(db);
+    reconcileLegacyCars(db);
+    expect(() => {
+      seed(db);
+      reconcileLegacyCars(db);
+    }).not.toThrow();
+
+    const manufacturerCount = db.prepare("SELECT COUNT(*) AS c FROM manufacturers WHERE name = '현대'").get().c;
+    expect(manufacturerCount).toBe(1);
+
+    const modelGroupCount = db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM model_groups
+         JOIN manufacturers ON manufacturers.id = model_groups.manufacturer_id
+         WHERE manufacturers.name = '현대' AND model_groups.name = '아반떼'`
+      )
+      .get().c;
+    expect(modelGroupCount).toBe(1);
+
+    const car = db.prepare('SELECT trim_id FROM cars WHERE id = 1').get();
+    const model = db
+      .prepare('SELECT models.name AS name FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
+      .get(car.trim_id);
+    expect(model.name).toBe('CN7');
   });
 });

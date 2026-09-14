@@ -1,17 +1,4 @@
-function findOrCreate(db, table, whereCols, insertCols) {
-  const whereClause = Object.keys(whereCols)
-    .map((col) => `${col} = ?`)
-    .join(' AND ');
-  const existing = db.prepare(`SELECT * FROM ${table} WHERE ${whereClause}`).get(...Object.values(whereCols));
-  if (existing) return existing;
-
-  const cols = Object.keys(insertCols);
-  const placeholders = cols.map(() => '?').join(', ');
-  const result = db
-    .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`)
-    .run(...Object.values(insertCols));
-  return db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid);
-}
+const { findOrCreate } = require('../../db/findOrCreate');
 
 function seedTrim(db, overrides = {}) {
   const manufacturerName = overrides.manufacturerName || '현대';

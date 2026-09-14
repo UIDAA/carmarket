@@ -1,4 +1,5 @@
 const { createDb } = require('./schema');
+const { findOrCreate } = require('./findOrCreate');
 
 const CATALOG = [
   {
@@ -159,34 +160,42 @@ const CATALOG = [
   },
 ];
 
-function findOrCreate(db, table, whereCols, insertCols) {
-  const whereClause = Object.keys(whereCols)
-    .map((col) => `${col} = ?`)
-    .join(' AND ');
-  const existing = db.prepare(`SELECT * FROM ${table} WHERE ${whereClause}`).get(...Object.values(whereCols));
-  if (existing) return existing;
+// 마이그레이션이 시드보다 먼저 도는 순서상, 시드 대상과 같은 이름의 제조사 stub이 findOrCreate로
+// 이미 만들어져 있을 수 있다(name_legacy 없음, sort_order=0인 채로). 그 경우 findOrCreate는 기존
+// row를 그대로 반환할 뿐 메타데이터를 갱신하지 않으므로, 시드가 의도한 값과 다르면 여기서 채워 넣는다.
+function upsertManufacturer(db, manufacturerSeed, index) {
+  const desired = {
+    name_legacy: manufacturerSeed.nameLegacy || null,
+    is_domestic: 1,
+    sort_order: index,
+  };
+  const manufacturer = findOrCreate(
+    db,
+    'manufacturers',
+    { name: manufacturerSeed.manufacturer },
+    { name: manufacturerSeed.manufacturer, ...desired }
+  );
 
-  const cols = Object.keys(insertCols);
-  const placeholders = cols.map(() => '?').join(', ');
-  const result = db
-    .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`)
-    .run(...Object.values(insertCols));
-  return db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid);
+  const needsBackfill =
+    manufacturer.name_legacy !== desired.name_legacy ||
+    manufacturer.is_domestic !== desired.is_domestic ||
+    manufacturer.sort_order !== desired.sort_order;
+  if (needsBackfill) {
+    db.prepare('UPDATE manufacturers SET name_legacy = ?, is_domestic = ?, sort_order = ? WHERE id = ?').run(
+      desired.name_legacy,
+      desired.is_domestic,
+      desired.sort_order,
+      manufacturer.id
+    );
+    Object.assign(manufacturer, desired);
+  }
+
+  return manufacturer;
 }
 
 function seed(db) {
   CATALOG.forEach((manufacturerSeed, index) => {
-    const manufacturer = findOrCreate(
-      db,
-      'manufacturers',
-      { name: manufacturerSeed.manufacturer },
-      {
-        name: manufacturerSeed.manufacturer,
-        name_legacy: manufacturerSeed.nameLegacy || null,
-        is_domestic: 1,
-        sort_order: index,
-      }
-    );
+    const manufacturer = upsertManufacturer(db, manufacturerSeed, index);
 
     manufacturerSeed.modelGroups.forEach((groupSeed) => {
       const modelGroup = findOrCreate(
@@ -228,10 +237,102 @@ function seed(db) {
   });
 }
 
+const FALLBACK_MODEL_NAME = '기본';
+
+// createDb()가 항상 migrateLegacyCarsToTrims를 먼저 돌리는 탓에, 시드가 실행되기 전 legacy 차량은
+// 실제 세대가 하나도 없는 상태에서 폴백 '기본' 모델에 영구히 고정된다. seed(db)로 진짜 카탈로그가
+// 채워진 뒤 이 함수를 돌려서, '기본'에 남아있는 차량들을 이제 매칭되는 실제 세대(+트림)로 옮기고,
+// 더 이상 아무 차량도 참조하지 않게 된 '기본' 모델/트림과, 그 결과 완전히 비어버린
+// model_group/manufacturer를 정리한다. 여러 번 실행해도 안전(idempotent)하다 — 이미 옮겨진 차량은
+// 더 이상 '기본' 모델을 통해 조회되지 않으므로 재처리 대상에서 자연히 빠진다.
+function reconcileLegacyCars(db) {
+  const carsOnFallback = db
+    .prepare(
+      `SELECT cars.id AS car_id, cars.year, cars.fuel_type, cars.transmission,
+              models.model_group_id AS model_group_id
+       FROM cars
+       JOIN trims ON trims.id = cars.trim_id
+       JOIN models ON models.id = trims.model_id
+       WHERE models.name = ?`
+    )
+    .all(FALLBACK_MODEL_NAME);
+
+  const touchedModelGroupIds = new Set();
+
+  for (const car of carsOnFallback) {
+    touchedModelGroupIds.add(car.model_group_id);
+
+    const realModel = db
+      .prepare(
+        `SELECT * FROM models
+         WHERE model_group_id = ? AND name != ?
+           AND start_year <= ? AND (end_year IS NULL OR end_year >= ?)
+         ORDER BY start_year DESC
+         LIMIT 1`
+      )
+      .get(car.model_group_id, FALLBACK_MODEL_NAME, car.year, car.year);
+
+    if (!realModel) continue; // 여전히 매칭되는 실제 세대가 없으면 '기본'에 그대로 둔다.
+
+    const trim = findOrCreate(
+      db,
+      'trims',
+      { model_id: realModel.id, fuel_type: car.fuel_type, transmission: car.transmission },
+      {
+        model_id: realModel.id,
+        name: `${car.fuel_type} 기본형`,
+        fuel_type: car.fuel_type,
+        transmission: car.transmission,
+      }
+    );
+
+    db.prepare('UPDATE cars SET trim_id = ? WHERE id = ?').run(trim.id, car.car_id);
+  }
+
+  const touchedManufacturerIds = new Set();
+
+  for (const modelGroupId of touchedModelGroupIds) {
+    const modelGroup = db.prepare('SELECT * FROM model_groups WHERE id = ?').get(modelGroupId);
+    if (!modelGroup) continue;
+    touchedManufacturerIds.add(modelGroup.manufacturer_id);
+
+    const fallbackModels = db
+      .prepare('SELECT * FROM models WHERE model_group_id = ? AND name = ?')
+      .all(modelGroupId, FALLBACK_MODEL_NAME);
+
+    for (const model of fallbackModels) {
+      const stillReferenced = db
+        .prepare(
+          `SELECT COUNT(*) AS c FROM cars JOIN trims ON trims.id = cars.trim_id WHERE trims.model_id = ?`
+        )
+        .get(model.id).c;
+      if (stillReferenced === 0) {
+        db.prepare('DELETE FROM trims WHERE model_id = ?').run(model.id);
+        db.prepare('DELETE FROM models WHERE id = ?').run(model.id);
+      }
+    }
+
+    const remainingModels = db.prepare('SELECT COUNT(*) AS c FROM models WHERE model_group_id = ?').get(modelGroupId).c;
+    if (remainingModels === 0) {
+      db.prepare('DELETE FROM model_groups WHERE id = ?').run(modelGroupId);
+    }
+  }
+
+  for (const manufacturerId of touchedManufacturerIds) {
+    const remainingGroups = db
+      .prepare('SELECT COUNT(*) AS c FROM model_groups WHERE manufacturer_id = ?')
+      .get(manufacturerId).c;
+    if (remainingGroups === 0) {
+      db.prepare('DELETE FROM manufacturers WHERE id = ?').run(manufacturerId);
+    }
+  }
+}
+
 if (require.main === module) {
   const db = createDb();
   seed(db);
+  reconcileLegacyCars(db);
   console.log('카탈로그 시드 데이터 적용 완료');
 }
 
-module.exports = { seed, CATALOG };
+module.exports = { seed, reconcileLegacyCars, CATALOG };
