@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { type CarInput, createCar, getCar, resolveImageUrl, updateCar } from '../api/cars';
+import { type Car, type CarInput, createCar, getCar, resolveImageUrl, updateCar } from '../api/cars';
 import { ApiError } from '../api/client';
 import Header from '../components/Header';
 import VehiclePicker, { type VehiclePickerValue } from '../components/VehiclePicker';
@@ -12,6 +12,7 @@ export default function CarFormPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const [vehicle, setVehicle] = useState<VehiclePickerValue>({});
+  const [loadedCar, setLoadedCar] = useState<Car | null>(null);
   const [firstRegisteredYear, setFirstRegisteredYear] = useState<number | ''>('');
   const [firstRegisteredMonth, setFirstRegisteredMonth] = useState<number | ''>('');
   const [modelYear, setModelYear] = useState<number | ''>('');
@@ -28,6 +29,7 @@ export default function CarFormPage() {
   useEffect(() => {
     if (!id) return;
     getCar(id).then((car) => {
+      setLoadedCar(car);
       setTitle(car.title);
       setMileage(car.mileage);
       setPrice(car.price);
@@ -89,6 +91,11 @@ export default function CarFormPage() {
 
         <div className="field">
           <label>차종 선택</label>
+          {isEdit && loadedCar && (
+            <p style={{ marginBottom: 10, fontSize: 13, color: 'var(--text-soft)' }}>
+              현재 선택: {loadedCar.brand} {loadedCar.model} · {loadedCar.fuel_type} · {loadedCar.transmission}
+            </p>
+          )}
           <VehiclePicker value={vehicle} onChange={setVehicle} />
         </div>
 
