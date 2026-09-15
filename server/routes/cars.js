@@ -408,8 +408,11 @@ function carsRouter(db) {
     if (recognized.firstRegisteredDate) {
       const parsedDate = new Date(recognized.firstRegisteredDate);
       if (!Number.isNaN(parsedDate.getTime())) {
-        result.firstRegisteredYear = parsedDate.getFullYear();
-        result.firstRegisteredMonth = parsedDate.getMonth() + 1;
+        // 날짜만 있는 ISO 문자열("YYYY-MM-DD")은 UTC 자정으로 파싱되므로, 로컬 타임존
+        // getter(getFullYear/getMonth)를 쓰면 서버 TZ가 음수 오프셋일 때 월/연 경계에서
+        // 하루 밀려 읽힌다 — UTC getter로 읽어 서버 TZ 설정과 무관하게 결정적으로 만든다.
+        result.firstRegisteredYear = parsedDate.getUTCFullYear();
+        result.firstRegisteredMonth = parsedDate.getUTCMonth() + 1;
       }
     }
 

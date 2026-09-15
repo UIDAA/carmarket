@@ -1,3 +1,5 @@
+const path = require('path');
+const { execFileSync } = require('child_process');
 const request = require('supertest');
 const { buildTestApp, registerAndLogin } = require('./helpers/testApp');
 const { seedTrim } = require('./helpers/catalogFixtures');
@@ -72,5 +74,25 @@ describe('POST /api/cars/ocr', () => {
 
     expect(res.body.catalogMatch).toEqual({ confidence: 'not_found' });
     expect(res.body.firstRegisteredYear).toBe(2021); // 카탈로그 매칭 실패해도 날짜는 채워짐
+  });
+
+  // 날짜만 있는 ISO 문자열("2021-01-01")은 UTC 자정으로 파싱되므로, 로컬 타임존
+  // getter(getFullYear/getMonth)를 쓰면 서버 TZ가 음수 오프셋일 때 하루 밀려 읽힌다
+  // (예: America/New_York에서 2020년 12월로 잘못 읽힘). 이미 떠 있는 Jest 프로세스
+  // 안에서 `process.env.TZ`를 바꿔도 Node가 프로세스 시작 시 캐시해둔 로컬 타임존에는
+  // 반영되지 않아 재현이 안 되므로(직접 확인함), TZ를 프로세스 생성 시점에 넘겨
+  // 완전히 새 자식 프로세스를 띄우는 방식으로 재현한다.
+  it('월/연 경계 날짜는 서버 TZ가 음수 오프셋이어도 밀리지 않는다(UTC 파싱 회귀 테스트)', () => {
+    const scriptPath = path.join(__dirname, 'helpers', 'ocrTimezoneCheck.js');
+    const output = execFileSync('node', [scriptPath], {
+      env: { ...process.env, TZ: 'America/New_York' }, // UTC-5
+      encoding: 'utf8',
+    });
+    const { status, body } = JSON.parse(output);
+
+    expect(status).toBe(200);
+    expect(body.ocrStatus).toBe('ok');
+    expect(body.firstRegisteredYear).toBe(2021);
+    expect(body.firstRegisteredMonth).toBe(1);
   });
 });
