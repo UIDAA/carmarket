@@ -323,6 +323,10 @@ const CATALOG = [
     ],
   },
   {
+    // ⚠️ 미검증: 이 브랜드 블록은 웹 검색(WebSearch) 예산 소진으로 실제 검증을 받지 못하고
+    // 기억(모델 지식)만으로 채운 초안이다. 다음 세션에서 웹 검색으로 세대코드/출시연도/
+    // 페이스리프트 시점/트림명을 반드시 재확인할 것. 상세 인계 내용은
+    // docs/superpowers/notes/2026-09-15-catalog-seed-handoff.md 참고.
     manufacturer: '기아',
     modelGroups: [
       {
