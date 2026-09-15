@@ -353,7 +353,7 @@ const CATALOG = [
             name: '더 뉴 K5 (JF)',
             powertrain: '일반',
             startYear: 2018,
-            endYear: 2019, // 웹 검증: DL3(2019.11) 출시로 대체 — 최초 초안의 2021은 K5(DL3)와 겹치는 오류였음
+            endYear: 2018, // 웹 검증: DL3(2019.11) 출시로 대체 — 최초 초안의 2021은 K5(DL3)와 겹치는 오류였음
             trims: [
               { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
               { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
@@ -533,7 +533,7 @@ const CATALOG = [
             name: '더 뉴 카니발 (YP)',
             powertrain: '일반',
             startYear: 2018,
-            endYear: 2020,
+            endYear: 2019,
             trims: [
               { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
               { name: '가솔린 3.3 노블레스', fuelType: '가솔린', transmission: '자동' },
@@ -858,7 +858,7 @@ const CATALOG = [
             name: '코란도 C (C200)',
             powertrain: '일반',
             startYear: 2011,
-            endYear: 2013,
+            endYear: 2012,
             trims: [
               { name: '가솔린 2.0 CVS', fuelType: '가솔린', transmission: '자동' },
               { name: '디젤 2.0 CVX', fuelType: '디젤', transmission: '자동' },
@@ -868,7 +868,7 @@ const CATALOG = [
             name: '뉴 코란도 C (C200)',
             powertrain: '일반',
             startYear: 2013,
-            endYear: 2019,
+            endYear: 2018,
             trims: [
               { name: '가솔린 2.0 KX', fuelType: '가솔린', transmission: '자동' },
               { name: '디젤 2.0 RX', fuelType: '디젤', transmission: '자동' },
@@ -903,7 +903,7 @@ const CATALOG = [
             name: '티볼리',
             powertrain: '일반',
             startYear: 2015,
-            endYear: 2017,
+            endYear: 2016,
             trims: [
               { name: '가솔린 1.6 TX', fuelType: '가솔린', transmission: '자동' },
               { name: '디젤 1.6 VX', fuelType: '디젤', transmission: '자동' },
@@ -913,7 +913,7 @@ const CATALOG = [
             name: '티볼리 아머',
             powertrain: '일반',
             startYear: 2017,
-            endYear: 2019,
+            endYear: 2018,
             trims: [
               { name: '가솔린 1.6 VX', fuelType: '가솔린', transmission: '자동' },
               { name: '가솔린 1.6 기어에디션', fuelType: '가솔린', transmission: '자동' },
@@ -923,7 +923,7 @@ const CATALOG = [
             name: '베리 뉴 티볼리',
             powertrain: '일반',
             startYear: 2019,
-            endYear: 2023,
+            endYear: 2022,
             trims: [
               { name: '가솔린 1.6 V3', fuelType: '가솔린', transmission: '자동' },
               { name: '가솔린 1.6 V5', fuelType: '가솔린', transmission: '자동' },
@@ -954,7 +954,7 @@ const CATALOG = [
             name: 'SM6 (초기형)',
             powertrain: '일반',
             startYear: 2016,
-            endYear: 2020,
+            endYear: 2019,
             trims: [
               { name: '디젤 1.5 SE', fuelType: '디젤', transmission: '자동' },
               { name: '가솔린 터보 1.6 RE', fuelType: '가솔린', transmission: '자동' },
@@ -979,7 +979,7 @@ const CATALOG = [
             name: 'QM6 (HZG)',
             powertrain: '일반',
             startYear: 2016,
-            endYear: 2019,
+            endYear: 2018,
             trims: [
               { name: '가솔린 2.0 SE', fuelType: '가솔린', transmission: '자동' },
               { name: '디젤 2.0 LE', fuelType: '디젤', transmission: '자동' },
@@ -989,7 +989,7 @@ const CATALOG = [
             name: '더 뉴 QM6 (1차 F/L)',
             powertrain: '일반',
             startYear: 2019,
-            endYear: 2020,
+            endYear: 2019,
             trims: [
               { name: 'LPe 2.0 LE', fuelType: 'LPG', transmission: '자동' },
               { name: '디젤 1.7 RE', fuelType: '디젤', transmission: '자동' },
@@ -999,7 +999,7 @@ const CATALOG = [
             name: '뉴 QM6 (2차 F/L)',
             powertrain: '일반',
             startYear: 2020,
-            endYear: 2023,
+            endYear: 2022,
             trims: [
               { name: '가솔린 2.0 LE', fuelType: '가솔린', transmission: '자동' },
               { name: 'LPe 2.0 프리미에르', fuelType: 'LPG', transmission: '자동' },
@@ -1024,7 +1024,7 @@ const CATALOG = [
             name: 'XM3 (초기형)',
             powertrain: '일반',
             startYear: 2020,
-            endYear: 2024,
+            endYear: 2023,
             trims: [
               { name: '가솔린 터보 1.3 LE', fuelType: '가솔린', transmission: '자동' },
               { name: '가솔린 터보 1.6 RE Signature', fuelType: '가솔린', transmission: '자동' },
@@ -1034,7 +1034,7 @@ const CATALOG = [
             name: 'XM3 하이브리드 (초기형)',
             powertrain: '하이브리드',
             startYear: 2022,
-            endYear: 2024,
+            endYear: 2023,
             trims: [{ name: 'E-Tech 하이브리드 RE', fuelType: '하이브리드', transmission: '자동' }],
           },
           {
@@ -1063,7 +1063,7 @@ const CATALOG = [
             name: '뉴 SM5 (L43)',
             powertrain: '일반',
             startYear: 2010,
-            endYear: 2012,
+            endYear: 2011,
             trims: [
               { name: '가솔린 2.0 PE', fuelType: '가솔린', transmission: '자동' },
               { name: '디젤 1.5 SE', fuelType: '디젤', transmission: '자동' },
@@ -1073,7 +1073,7 @@ const CATALOG = [
             name: '뉴 SM5 플래티넘 (L43)',
             powertrain: '일반',
             startYear: 2012,
-            endYear: 2015,
+            endYear: 2014,
             trims: [
               { name: '가솔린 2.0 SE', fuelType: '가솔린', transmission: '자동' },
               { name: '디젤 1.5 LE', fuelType: '디젤', transmission: '자동' },
@@ -1104,7 +1104,7 @@ const CATALOG = [
             name: '트레일블레이저 (9BYC)',
             powertrain: '일반',
             startYear: 2020, // 월 불확실: 출시월 나무위키 단독 출처, 연도는 확실
-            endYear: 2023,
+            endYear: 2022,
             trims: [
               { name: '가솔린 터보 1.35 LS', fuelType: '가솔린', transmission: '자동' },
               { name: '가솔린 터보 1.35 RS', fuelType: '가솔린', transmission: '자동' },
@@ -1129,7 +1129,7 @@ const CATALOG = [
             name: '트랙스 (U200)',
             powertrain: '일반',
             startYear: 2013,
-            endYear: 2016,
+            endYear: 2015,
             trims: [
               { name: '가솔린 터보 1.4 LS', fuelType: '가솔린', transmission: '자동' },
               { name: '디젤 1.6 LT 레더패키지', fuelType: '디젤', transmission: '자동' },
@@ -1164,7 +1164,7 @@ const CATALOG = [
             name: '올 뉴 말리부',
             powertrain: '일반',
             startYear: 2016,
-            endYear: 2018,
+            endYear: 2017,
             trims: [
               { name: '가솔린 터보 1.5 LT', fuelType: '가솔린', transmission: '자동' },
               { name: '가솔린 터보 2.0 LTZ', fuelType: '가솔린', transmission: '자동' },
@@ -1203,7 +1203,7 @@ const CATALOG = [
             name: '더 넥스트 스파크',
             powertrain: '일반',
             startYear: 2015,
-            endYear: 2018,
+            endYear: 2017,
             trims: [
               { name: '가솔린 1.0 LS', fuelType: '가솔린', transmission: '수동' },
               { name: '가솔린 1.0 LT+', fuelType: '가솔린', transmission: '자동' },
