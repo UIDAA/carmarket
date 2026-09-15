@@ -239,7 +239,7 @@ function buildFacets(db, filters) {
 function getTrimWithLineage(db, trimId) {
   return db
     .prepare(
-      `SELECT trims.id, trims.fuel_type, trims.transmission,
+      `SELECT trims.id, trims.name AS trim_name, trims.fuel_type, trims.transmission,
               models.id AS model_id, models.start_year, models.end_year,
               model_groups.name AS model_group_name,
               manufacturers.name AS manufacturer_name
@@ -252,12 +252,27 @@ function getTrimWithLineage(db, trimId) {
     .get(trimId);
 }
 
+// 매물 제목(title)은 판매자가 직접 쓰는 자유 텍스트 칼럼으로 남겨둔다(지금은 등록 폼에 입력칸이
+// 없어 항상 비어 있지만, 나중에 "판매자 코멘트" 같은 기능이 붙을 자리다) — 서버가 이 칼럼 값을
+// 덮어쓰지 않는다. 화면에 보여줄 제목은 트림 계보 + 최초등록연도로 매 응답마다 계산해서
+// display_title 필드로만 내려준다. car.title은 그대로, car.trim_name은 응답에서 제거한다.
+function withDisplayTitle(car) {
+  const { trim_name, ...rest } = car;
+  return { ...rest, display_title: `${car.brand} ${car.model} ${trim_name} (${car.first_registered_year}년식)` };
+}
+
 function carsRouter(db) {
   const router = express.Router();
 
   router.get('/mine', requireAuth, (req, res) => {
-    const cars = db.prepare('SELECT * FROM cars WHERE seller_id = ? ORDER BY created_at DESC').all(req.userId);
-    res.json(cars);
+    const cars = db
+      .prepare(
+        `SELECT cars.*, trims.name AS trim_name
+         FROM cars JOIN trims ON trims.id = cars.trim_id
+         WHERE cars.seller_id = ? ORDER BY cars.created_at DESC`
+      )
+      .all(req.userId);
+    res.json(cars.map(withDisplayTitle));
   });
 
   router.get('/search', (req, res) => {
@@ -283,8 +298,9 @@ function carsRouter(db) {
 
     const total = db.prepare(`SELECT COUNT(*) AS c ${FROM_CLAUSE} ${where}`).get(...params).c;
     const items = db
-      .prepare(`SELECT cars.* ${FROM_CLAUSE} ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`)
-      .all(...params, pageSize, offset);
+      .prepare(`SELECT cars.*, trims.name AS trim_name ${FROM_CLAUSE} ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`)
+      .all(...params, pageSize, offset)
+      .map(withDisplayTitle);
     const facets = buildFacets(db, filters);
 
     res.json({ items, total, page, pageSize, facets });
@@ -297,50 +313,59 @@ function carsRouter(db) {
     const params = [];
 
     if (brand) {
-      conditions.push('brand = ?');
+      conditions.push('cars.brand = ?');
       params.push(brand);
     }
     if (minPrice) {
-      conditions.push('price >= ?');
+      conditions.push('cars.price >= ?');
       params.push(Number(minPrice));
     }
     if (maxPrice) {
-      conditions.push('price <= ?');
+      conditions.push('cars.price <= ?');
       params.push(Number(maxPrice));
     }
     if (region) {
-      conditions.push('region = ?');
+      conditions.push('cars.region = ?');
       params.push(region);
     }
     if (fuelType) {
-      conditions.push('fuel_type = ?');
+      conditions.push('cars.fuel_type = ?');
       params.push(fuelType);
     }
     if (keyword) {
-      conditions.push('(title LIKE ? OR model LIKE ?)');
+      conditions.push('(cars.title LIKE ? OR cars.model LIKE ?)');
       params.push(`%${keyword}%`, `%${keyword}%`);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-    const cars = db.prepare(`SELECT * FROM cars ${where} ORDER BY created_at DESC`).all(...params);
+    const cars = db
+      .prepare(`SELECT cars.*, trims.name AS trim_name FROM cars JOIN trims ON trims.id = cars.trim_id ${where} ORDER BY cars.created_at DESC`)
+      .all(...params);
 
-    res.json(cars);
+    res.json(cars.map(withDisplayTitle));
   });
 
   router.get('/:id', (req, res) => {
     const car = db
       .prepare(
-        `SELECT cars.*, users.nickname AS seller_nickname
-         FROM cars JOIN users ON users.id = cars.seller_id
+        `SELECT cars.*, trims.name AS trim_name, users.nickname AS seller_nickname
+         FROM cars
+         JOIN trims ON trims.id = cars.trim_id
+         JOIN users ON users.id = cars.seller_id
          WHERE cars.id = ?`
       )
       .get(req.params.id);
     if (!car) return res.status(404).json({ error: '매물을 찾을 수 없습니다.' });
-    res.json(car);
+    res.json(withDisplayTitle(car));
   });
 
   router.post('/', requireAuth, upload.single('photo'), (req, res) => {
-    const { title, region, description } = req.body;
+    // title은 판매자가 나중에 코멘트 등으로 채울 자유 텍스트 칼럼이다. 지금은 등록 폼에
+    // 입력칸이 없어 항상 빈 문자열로 저장되지만, 서버는 클라이언트가 보낸 값을 그대로
+    // 받아들일 뿐 필수값으로 요구하지도, 대신 지어내지도 않는다 — 화면 표시용 제목은
+    // display_title(트림 계보 + 최초등록연도로 매번 계산)을 쓴다.
+    const { region, description } = req.body;
+    const title = req.body.title || '';
     const trimId = Number(req.body.trimId);
     const firstRegisteredYear = Number(req.body.firstRegisteredYear);
     const firstRegisteredMonth = req.body.firstRegisteredMonth ? Number(req.body.firstRegisteredMonth) : null;
@@ -348,7 +373,7 @@ function carsRouter(db) {
     const mileage = Number(req.body.mileage);
     const price = Number(req.body.price);
 
-    if (!title || !trimId || !firstRegisteredYear || !mileage || !price || !region) {
+    if (!trimId || !firstRegisteredYear || !mileage || !price || !region) {
       return res.status(400).json({ error: '필수 항목이 누락되었습니다.' });
     }
 
@@ -391,7 +416,7 @@ function carsRouter(db) {
       );
 
     const car = db.prepare('SELECT * FROM cars WHERE id = ?').get(result.lastInsertRowid);
-    res.status(201).json(car);
+    res.status(201).json(withDisplayTitle({ ...car, trim_name: trim.trim_name }));
   });
 
   router.put('/:id', requireAuth, upload.single('photo'), (req, res) => {
@@ -443,7 +468,7 @@ function carsRouter(db) {
     );
 
     const updated = db.prepare('SELECT * FROM cars WHERE id = ?').get(req.params.id);
-    res.json(updated);
+    res.json(withDisplayTitle({ ...updated, trim_name: trim.trim_name }));
   });
 
   router.delete('/:id', requireAuth, (req, res) => {

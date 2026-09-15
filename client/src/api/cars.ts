@@ -5,7 +5,8 @@ export interface Car {
   seller_id: number;
   seller_nickname?: string;
   trim_id: number;
-  title: string;
+  title: string;          // 판매자가 나중에 코멘트 등으로 채울 자유 텍스트. 지금은 입력칸이 없어 보통 빈 문자열.
+  display_title: string;  // 화면에 보여줄 제목. 서버가 트림 계보 + 최초등록연도로 매번 계산해서 내려준다.
   brand: string;
   model: string;
   first_registered_year: number;
@@ -15,7 +16,8 @@ export interface Car {
   price: number;
   fuel_type: string;
   transmission: string;
-  region: string;
+  region: string;              // 시도 단위
+  region_detail: string | null; // 시/군/구까지 있던 예전 값의 보존본(있으면). 새 등록은 항상 null.
   description: string | null;
   image_url: string | null;
   status: '판매중' | '예약중' | '거래완료';
@@ -23,7 +25,7 @@ export interface Car {
 }
 
 export interface CarInput {
-  title: string;
+  title?: string; // 지금은 등록 폼에 입력칸이 없어 보내지 않는다 — 나중에 판매자 코멘트 기능이 쓸 자리
   trimId: number;
   firstRegisteredYear: number;
   firstRegisteredMonth?: number;

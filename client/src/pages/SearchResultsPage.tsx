@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import CarCard from '../components/CarCard';
-import { type Car, searchCars } from '../api/cars';
+import { type Car, type SearchResult, searchCars } from '../api/cars';
 import { addFavorite, listFavorites, removeFavorite } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,6 +27,65 @@ const CHIP_LABELS: Record<string, string> = {
   mileageMax: '최대주행거리',
   region: '지역',
 };
+
+interface RecentSearch {
+  label: string;
+  query: string;
+}
+
+// facets에 이미 이름이 들어있으니(id -> name 조회를 위해 별도 API를 부르지 않고) 그걸로
+// 사람이 읽을 라벨을 만든다. 카탈로그 파셋이 없는 값(연료/가격 등)은 원래 필터 값을 그대로 쓴다.
+function buildRecentSearchLabel(searchParams: URLSearchParams, facets: SearchResult['facets']): string {
+  const parts: string[] = [];
+
+  const manufacturerId = searchParams.get('manufacturerId');
+  if (manufacturerId) {
+    const found = facets.manufacturers.find((m) => m.id === Number(manufacturerId));
+    parts.push(found ? found.name : `브랜드 ${manufacturerId}`);
+  }
+  const modelGroupId = searchParams.get('modelGroupId');
+  if (modelGroupId) {
+    const found = facets.modelGroups?.find((g) => g.id === Number(modelGroupId));
+    parts.push(found ? found.name : `모델 ${modelGroupId}`);
+  }
+  const modelId = searchParams.get('modelId');
+  if (modelId) {
+    const found = facets.models?.find((m) => m.id === Number(modelId));
+    parts.push(found ? found.name : `세대 ${modelId}`);
+  }
+  const trimId = searchParams.get('trimId');
+  if (trimId) {
+    const found = facets.trims?.find((t) => t.id === Number(trimId));
+    parts.push(found ? found.name : `트림 ${trimId}`);
+  }
+  const fuel = searchParams.get('fuel');
+  if (fuel) parts.push(fuel);
+  const region = searchParams.get('region');
+  if (region) parts.push(region);
+
+  const yearFrom = searchParams.get('yearFrom');
+  const yearTo = searchParams.get('yearTo');
+  if (yearFrom || yearTo) parts.push(`${yearFrom ?? ''}~${yearTo ?? ''}년식`);
+
+  const priceMin = searchParams.get('priceMin');
+  const priceMax = searchParams.get('priceMax');
+  if (priceMin || priceMax) {
+    const min = priceMin ? `${Number(priceMin) / 10000}만원` : '';
+    const max = priceMax ? `${Number(priceMax) / 10000}만원` : '';
+    parts.push(`${min}~${max}`);
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : '전체 조건';
+}
+
+function saveRecentSearch(searchParams: URLSearchParams, facets: SearchResult['facets']) {
+  const query = searchParams.toString();
+  const label = buildRecentSearchLabel(searchParams, facets);
+  const existing: RecentSearch[] = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+  const deduped = existing.filter((entry) => entry.query !== query);
+  const next = [{ label, query }, ...deduped].slice(0, 5);
+  localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+}
 
 export default function SearchResultsPage() {
   const { user } = useAuth();
@@ -53,12 +112,9 @@ export default function SearchResultsPage() {
       .then((res) => {
         setItems(res.items);
         setTotal(res.total);
+        saveRecentSearch(searchParams, res.facets);
       })
       .finally(() => setLoading(false));
-
-    const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
-    const next = Array.from(new Set([searchParams.toString(), ...existing])).slice(0, 5);
-    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
 

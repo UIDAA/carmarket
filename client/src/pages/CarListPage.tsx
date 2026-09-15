@@ -6,6 +6,11 @@ import { type Manufacturer, listManufacturers, formatManufacturerLabel } from '.
 
 const RECENT_SEARCHES_KEY = 'carmarket:recentSearches';
 
+interface RecentSearch {
+  label: string;
+  query: string;
+}
+
 function buildQueryString(value: VehiclePickerValue) {
   const params = new URLSearchParams();
   if (value.manufacturerId) params.set('manufacturerId', String(value.manufacturerId));
@@ -23,12 +28,23 @@ export default function CarListPage() {
   const navigate = useNavigate();
   const [value, setValue] = useState<VehiclePickerValue>({});
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
 
   useEffect(() => {
     listManufacturers().then(setManufacturers);
     const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
-    setRecentSearches(raw ? JSON.parse(raw) : []);
+    const parsed: unknown[] = raw ? JSON.parse(raw) : [];
+    // 예전 버전은 라벨 없이 쿼리스트링만 저장했다 — 그 기록을 라벨로 되돌릴 방법이 없으므로
+    // (아이디를 이름으로 되짚어줄 facets가 그 시점엔 없었다) raw 쿼리스트링을 그대로 보여주는 대신
+    // 버린다. 기록 몇 개가 사라지는 게 사용자에게 원본 id를 보여주는 것보다 낫다.
+    const normalized: RecentSearch[] = parsed.filter(
+      (entry): entry is RecentSearch =>
+        typeof entry === 'object' && entry !== null && 'label' in entry && 'query' in entry
+    );
+    setRecentSearches(normalized);
+    if (normalized.length !== parsed.length) {
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(normalized));
+    }
   }, []);
 
   const popular = [...manufacturers].sort((a, b) => b.count - a.count).slice(0, 3);
@@ -66,9 +82,9 @@ export default function CarListPage() {
           <div style={{ marginTop: 32 }}>
             <h2 style={{ fontSize: 16, marginBottom: 12 }}>최근 본 조건</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {recentSearches.map((query) => (
+              {recentSearches.map(({ label, query }) => (
                 <button key={query} className="chip" onClick={() => navigate(`/search?${query}`)}>
-                  {query}
+                  {label}
                 </button>
               ))}
             </div>

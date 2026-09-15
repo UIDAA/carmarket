@@ -1,4 +1,4 @@
-const { createDb, migrateLegacyCarsToTrims } = require('../db/schema');
+const { createDb, migrateLegacyCarsToTrims, backfillRegionDetail } = require('../db/schema');
 const { seed, reconcileLegacyCars } = require('../db/seed');
 
 describe('카탈로그 스키마', () => {
@@ -281,5 +281,51 @@ describe('post-seed reconciliation of legacy "기본" cars', () => {
       .prepare('SELECT models.name AS name FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
       .get(car.trim_id);
     expect(model.name).toBe('CN7');
+  });
+});
+
+describe('region_detail 백필', () => {
+  it('세부 지역을 region_detail에 보존한 뒤 region을 시도만 남긴다', () => {
+    const db = createDb(':memory:');
+    db.prepare('INSERT INTO users (email, password_hash, nickname) VALUES (?, ?, ?)').run(
+      'seller4@test.com',
+      'hash',
+      '판매자4'
+    );
+    // createDb()가 이미 한 번 backfillRegionDetail을 돌린 뒤이므로, 이 매물은 그 시점 이후에
+    // 새로 들어온 것처럼 region_detail이 비어있는 상태에서 직접 다시 돌려본다.
+    db.prepare(
+      `INSERT INTO cars (seller_id, title, brand, model, year, mileage, price, fuel_type, transmission, region, status)
+       VALUES (1, '', '현대', '아반떼', 2021, 1, 1, '가솔린', '자동', '서울 강남구', '판매중')`
+    ).run();
+
+    backfillRegionDetail(db);
+
+    const car = db.prepare('SELECT region, region_detail FROM cars WHERE id = 1').get();
+    expect(car.region).toBe('서울');
+    expect(car.region_detail).toBe('서울 강남구');
+  });
+
+  it('이미 region_detail이 채워진 행은 다시 건드리지 않는다(멱등)', () => {
+    const db = createDb(':memory:');
+    db.prepare('INSERT INTO users (email, password_hash, nickname) VALUES (?, ?, ?)').run(
+      'seller5@test.com',
+      'hash',
+      '판매자5'
+    );
+    db.prepare(
+      `INSERT INTO cars (seller_id, title, brand, model, year, mileage, price, fuel_type, transmission, region, status)
+       VALUES (1, '', '현대', '아반떼', 2021, 1, 1, '가솔린', '자동', '서울 강남구', '판매중')`
+    ).run();
+    backfillRegionDetail(db);
+
+    // region을 수동으로 다시 세분화했다고 가정 — 재실행이 region_detail을 이미 있는 값으로 덮어써서
+    // 사용자가 나중에 고친 region까지 잃어버리면 안 된다.
+    db.prepare("UPDATE cars SET region = '서울 서초구' WHERE id = 1").run();
+    backfillRegionDetail(db);
+
+    const car = db.prepare('SELECT region, region_detail FROM cars WHERE id = 1').get();
+    expect(car.region).toBe('서울 서초구'); // 재실행이 다시 자르지 않았다
+    expect(car.region_detail).toBe('서울 강남구'); // 원래 보존된 값 그대로
   });
 });

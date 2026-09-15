@@ -115,6 +115,9 @@ function createDb(path = `${__dirname}/carmarket.sqlite`) {
   if (!carColumns.includes('model_year')) {
     db.exec('ALTER TABLE cars ADD COLUMN model_year INTEGER');
   }
+  if (!carColumns.includes('region_detail')) {
+    db.exec('ALTER TABLE cars ADD COLUMN region_detail TEXT');
+  }
   db.exec('CREATE INDEX IF NOT EXISTS idx_cars_trim_id ON cars(trim_id)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_cars_first_registered_year ON cars(first_registered_year)');
 
@@ -129,8 +132,21 @@ function createDb(path = `${__dirname}/carmarket.sqlite`) {
   }
 
   migrateLegacyCarsToTrims(db);
+  backfillRegionDetail(db);
 
   return db;
+}
+
+// 지역을 자유입력(시/군/구까지)에서 시도 단위 선택으로 좁히면서, 기존에 더 세부적으로
+// 적혀 있던 원본 값을 잃지 않도록 region_detail에 보존한 다음 region은 첫 토큰(시도)만 남긴다.
+// region_detail이 이미 채워진 행은 건드리지 않으므로(멱등), 이후 시/군/구 필터를 추가할 때
+// 원본 데이터를 그대로 활용할 수 있다.
+function backfillRegionDetail(db) {
+  const rows = db.prepare('SELECT id, region FROM cars WHERE region_detail IS NULL').all();
+  for (const row of rows) {
+    const sido = row.region.split(' ')[0];
+    db.prepare('UPDATE cars SET region_detail = ?, region = ? WHERE id = ?').run(row.region, sido, row.id);
+  }
 }
 
 // 레거시 차량의 brand 텍스트가 어떤 제조사의 현재 name과도, 구 사명(name_legacy)과도 일치하면
@@ -202,4 +218,4 @@ function migrateLegacyCarsToTrims(db) {
   db.prepare('UPDATE cars SET first_registered_year = year WHERE first_registered_year IS NULL').run();
 }
 
-module.exports = { createDb, migrateLegacyCarsToTrims };
+module.exports = { createDb, migrateLegacyCarsToTrims, backfillRegionDetail };

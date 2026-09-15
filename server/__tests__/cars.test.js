@@ -32,7 +32,11 @@ describe('POST /api/cars', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('판매중');
+    // title은 판매자가 나중에 코멘트용으로 채울 자유 텍스트 칼럼이라 서버가 값을 지어내거나
+    // 덮어쓰지 않는다 — 클라이언트가 보낸 값을 그대로 저장한다(여기서는 carPayload가 보낸 값).
+    // 화면 표시용 제목은 별도의 display_title.
     expect(res.body.title).toBe('2021 아반떼 CN7 스마트');
+    expect(res.body.display_title).toBe('현대 아반떼 가솔린 1.6 스마트 (2021년식)');
     expect(res.body.brand).toBe('현대');
     expect(res.body.model).toBe('아반떼');
     expect(res.body.fuel_type).toBe('가솔린');
@@ -40,6 +44,23 @@ describe('POST /api/cars', () => {
     expect(res.body.first_registered_year).toBe(2021);
     expect(res.body.first_registered_month).toBe(7);
     expect(res.body.model_year).toBe(2022);
+  });
+
+  it('creates a car without a client-provided title (kept empty, reserved for a future seller comment)', async () => {
+    const { app, db } = buildTestApp();
+    const { trimId } = seedTrim(db);
+    const token = await registerAndLogin(app);
+
+    const req = request(app).post('/api/cars').set('Authorization', `Bearer ${token}`);
+    Object.entries(carPayload(trimId)).forEach(([key, value]) => {
+      if (key === 'title') return; // 일부러 title을 안 보낸다
+      req.field(key, String(value));
+    });
+    const res = await req;
+
+    expect(res.status).toBe(201);
+    expect(res.body.title).toBe('');
+    expect(res.body.display_title).toBe('현대 아반떼 가솔린 1.6 스마트 (2021년식)');
   });
 
   it('creates a car without optional firstRegisteredMonth/modelYear (nullable)', async () => {
@@ -134,6 +155,8 @@ describe('GET /api/cars/:id', () => {
     const res = await request(app).get(`/api/cars/${created.body.id}`);
     expect(res.body.seller_nickname).toBe('이든자동차');
     expect(res.body.transmission).toBe('수동');
+    expect(res.body.display_title).toBe('현대 아반떼 가솔린 1.6 스마트 (2021년식)');
+    expect(res.body.trim_name).toBeUndefined(); // 응답에서 trim_name은 제거되고 display_title만 남는다
   });
 });
 

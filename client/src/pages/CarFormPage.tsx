@@ -7,6 +7,11 @@ import VehiclePicker, { type VehiclePickerValue } from '../components/VehiclePic
 
 const CURRENT_YEAR = new Date().getFullYear();
 
+const SIDO_LIST = [
+  '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
+  '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
+];
+
 export default function CarFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -16,9 +21,8 @@ export default function CarFormPage() {
   const [firstRegisteredYear, setFirstRegisteredYear] = useState<number | ''>('');
   const [firstRegisteredMonth, setFirstRegisteredMonth] = useState<number | ''>('');
   const [modelYear, setModelYear] = useState<number | ''>('');
-  const [title, setTitle] = useState('');
-  const [mileage, setMileage] = useState(0);
-  const [price, setPrice] = useState(0);
+  const [mileage, setMileage] = useState<number | ''>('');
+  const [price, setPrice] = useState<number | ''>('');
   const [region, setRegion] = useState('');
   const [description, setDescription] = useState('');
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
@@ -30,7 +34,6 @@ export default function CarFormPage() {
     if (!id) return;
     getCar(id).then((car) => {
       setLoadedCar(car);
-      setTitle(car.title);
       setMileage(car.mileage);
       setPrice(car.price);
       setRegion(car.region);
@@ -52,18 +55,17 @@ export default function CarFormPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!vehicle.trimId || !firstRegisteredYear) {
-      setError('차종과 최초등록연도를 선택/입력해주세요.');
+    if (!vehicle.trimId || !firstRegisteredYear || mileage === '' || price === '' || !region) {
+      setError('필수 항목을 모두 선택/입력해주세요.');
       return;
     }
     const input: CarInput = {
-      title,
       trimId: vehicle.trimId,
       firstRegisteredYear: Number(firstRegisteredYear),
       ...(firstRegisteredMonth ? { firstRegisteredMonth: Number(firstRegisteredMonth) } : {}),
       ...(modelYear ? { modelYear: Number(modelYear) } : {}),
-      mileage,
-      price,
+      mileage: Number(mileage),
+      price: Number(price),
       region,
       description,
       photo,
@@ -175,16 +177,6 @@ export default function CarFormPage() {
           </div>
         </div>
 
-        <div className="field">
-          <label htmlFor="field-title">제목</label>
-          <input
-            id="field-title"
-            className="input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
         <div className="row2">
           <div className="field">
             <label htmlFor="field-mileage">주행거리(km)</label>
@@ -193,7 +185,7 @@ export default function CarFormPage() {
               className="input"
               type="number"
               value={mileage}
-              onChange={(e) => setMileage(Number(e.target.value))}
+              onChange={(e) => setMileage(e.target.value === '' ? '' : Number(e.target.value))}
               required
             />
           </div>
@@ -204,20 +196,27 @@ export default function CarFormPage() {
               className="input"
               type="number"
               value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
+              onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
               required
             />
           </div>
         </div>
         <div className="field">
           <label htmlFor="field-region">지역</label>
-          <input
+          <select
             id="field-region"
             className="input"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
             required
-          />
+          >
+            <option value="">지역 선택</option>
+            {SIDO_LIST.map((sido) => (
+              <option key={sido} value={sido}>
+                {sido}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="field">
           <label htmlFor="field-description">상세설명</label>

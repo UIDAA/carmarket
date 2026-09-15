@@ -81,7 +81,7 @@ export default function CarDetailPage() {
             {resolveImageUrl(car.image_url) ? (
               <img
                 src={resolveImageUrl(car.image_url)!}
-                alt={car.title}
+                alt={car.display_title}
                 style={{ width: '100%', height: 320, objectFit: 'cover', borderRadius: 'var(--radius)' }}
               />
             ) : (
@@ -96,7 +96,7 @@ export default function CarDetailPage() {
 
           <div style={{ flex: 1, minWidth: 280 }}>
             <div className={`status-badge ${car.status}`}>{car.status}</div>
-            <h1 style={{ fontSize: 28, margin: '12px 0 6px' }}>{car.title}</h1>
+            <h1 style={{ fontSize: 28, margin: '12px 0 6px' }}>{car.display_title}</h1>
             <div className="display" style={{ fontSize: 30, fontWeight: 700, marginBottom: 20 }}>
               {(car.price / 10000).toLocaleString()}만원
             </div>
