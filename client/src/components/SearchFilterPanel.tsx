@@ -34,19 +34,11 @@ interface Props {
   onSearch: () => void;
 }
 
-type ActiveRow =
-  | 'manufacturer'
-  | 'model'
-  | 'trim'
-  | 'year'
-  | 'mileage'
-  | 'price'
-  | 'region'
-  | 'fuel'
-  | 'transmission'
-  | null;
+type ActiveRow = 'manufacturer' | 'model' | 'trim' | 'region' | 'fuel' | 'transmission' | null;
 type ModelStep = 'group' | 'generation';
-type YearStep = 'min' | 'max';
+// 연식/주행거리/가격은 별도 화면으로 이동하지 않고, 행을 누르면 그 자리에서 펼쳐지는
+// 아코디언 방식이다 — 한 번에 하나만 펼쳐진다.
+type ExpandedRow = 'year' | 'mileage' | 'price' | null;
 
 const CURRENT_YEAR = new Date().getFullYear();
 const FALLBACK_MIN_YEAR = 1990;
@@ -75,12 +67,6 @@ function buildSearchQuery(value: SearchFilterValue) {
   if (value.fuel) query.fuel = value.fuel;
   if (value.transmission) query.transmission = value.transmission;
   return query;
-}
-
-function range(from: number, to: number) {
-  const years: number[] = [];
-  for (let y = to; y >= from; y--) years.push(y);
-  return years;
 }
 
 function formatYearRange(yearFrom?: number, yearTo?: number) {
@@ -121,12 +107,8 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
 
   const [activeRow, setActiveRow] = useState<ActiveRow>(null);
   const [modelStep, setModelStep] = useState<ModelStep>('group');
-  const [yearStep, setYearStep] = useState<YearStep>('min');
+  const [expandedRow, setExpandedRow] = useState<ExpandedRow>(null);
 
-  const [draftMileageLow, setDraftMileageLow] = useState(MILEAGE_MIN);
-  const [draftMileageHigh, setDraftMileageHigh] = useState(MILEAGE_MAX);
-  const [draftPriceLow, setDraftPriceLow] = useState(PRICE_MIN);
-  const [draftPriceHigh, setDraftPriceHigh] = useState(PRICE_MAX);
   const [draftChoice, setDraftChoice] = useState<string | undefined>(undefined); // 지역/연료/변속기 공용
 
   useEffect(() => {
@@ -162,15 +144,6 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
 
   function openRow(row: ActiveRow) {
     if (row === 'model') setModelStep(value.modelGroupId ? 'generation' : 'group');
-    if (row === 'year') setYearStep('min');
-    if (row === 'mileage') {
-      setDraftMileageLow(value.mileageMin ?? MILEAGE_MIN);
-      setDraftMileageHigh(value.mileageMax ?? MILEAGE_MAX);
-    }
-    if (row === 'price') {
-      setDraftPriceLow(value.priceMin ?? PRICE_MIN);
-      setDraftPriceHigh(value.priceMax ?? PRICE_MAX);
-    }
     if (row === 'region') setDraftChoice(value.region);
     if (row === 'fuel') setDraftChoice(value.fuel);
     if (row === 'transmission') setDraftChoice(value.transmission);
@@ -181,23 +154,31 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
     setActiveRow(null);
   }
 
+  function toggleExpanded(row: Exclude<ExpandedRow, null>) {
+    setExpandedRow((prev) => (prev === row ? null : row));
+  }
+
+  // 카탈로그 계층이 바뀌면 그 아래에 종속된 값(하위 카탈로그 선택, 그 세대 범위에 묶여있던
+  // 연식)만 지운다 — 주행거리/가격/지역/연료/변속기처럼 카탈로그와 무관한 필터는 브랜드나
+  // 세대를 바꿔도 그대로 유지되어야 한다(예전엔 값 객체를 통째로 새로 만들어서 이것들이
+  // 같이 날아갔었다).
   function selectManufacturer(id?: number) {
-    onChange({ manufacturerId: id });
+    onChange({ ...value, manufacturerId: id, modelGroupId: undefined, modelId: undefined, trimId: undefined, yearFrom: undefined, yearTo: undefined });
     closeRow();
   }
 
   function selectModelGroup(id?: number) {
     if (id === undefined) {
-      onChange({ manufacturerId: value.manufacturerId });
+      onChange({ ...value, modelGroupId: undefined, modelId: undefined, trimId: undefined, yearFrom: undefined, yearTo: undefined });
       closeRow();
       return;
     }
-    onChange({ manufacturerId: value.manufacturerId, modelGroupId: id });
+    onChange({ ...value, modelGroupId: id, modelId: undefined, trimId: undefined, yearFrom: undefined, yearTo: undefined });
     setModelStep('generation');
   }
 
   function selectModel(id?: number) {
-    onChange({ manufacturerId: value.manufacturerId, modelGroupId: value.modelGroupId, modelId: id });
+    onChange({ ...value, modelId: id, trimId: undefined, yearFrom: undefined, yearTo: undefined });
     closeRow();
   }
 
@@ -206,34 +187,29 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
     closeRow();
   }
 
-  function selectYearMin(year?: number) {
-    // 이미 골라둔 최대 연식이 새 최소 연식보다 작아지면(역전) 함께 지운다.
-    const nextYearTo = value.yearTo !== undefined && year !== undefined && value.yearTo < year ? undefined : value.yearTo;
-    onChange({ ...value, yearFrom: year, yearTo: nextYearTo });
-    setYearStep('max');
+  // 연식/주행거리/가격은 슬라이더를 놓을 때마다(드래그 중 계속) 바로 실제 값에 반영한다 —
+  // 별도 확인 버튼 없이 그 자리에서 즉시 라이브 건수에 반영되는 게 인라인 슬라이더의 자연스러운 동작.
+  function handleYearLowChange(nextLow: number) {
+    const yearFrom = nextLow === yearMin ? undefined : nextLow;
+    const yearTo = value.yearTo !== undefined && nextLow > value.yearTo ? undefined : value.yearTo;
+    onChange({ ...value, yearFrom, yearTo });
   }
-
-  function selectYearMax(year?: number) {
-    onChange({ ...value, yearTo: year });
-    closeRow();
+  function handleYearHighChange(nextHigh: number) {
+    const yearTo = nextHigh === yearMax ? undefined : nextHigh;
+    const yearFrom = value.yearFrom !== undefined && nextHigh < value.yearFrom ? undefined : value.yearFrom;
+    onChange({ ...value, yearFrom, yearTo });
   }
-
-  function confirmMileage() {
-    onChange({
-      ...value,
-      mileageMin: draftMileageLow === MILEAGE_MIN ? undefined : draftMileageLow,
-      mileageMax: draftMileageHigh === MILEAGE_MAX ? undefined : draftMileageHigh,
-    });
-    closeRow();
+  function handleMileageLowChange(nextLow: number) {
+    onChange({ ...value, mileageMin: nextLow === MILEAGE_MIN ? undefined : nextLow });
   }
-
-  function confirmPrice() {
-    onChange({
-      ...value,
-      priceMin: draftPriceLow === PRICE_MIN ? undefined : draftPriceLow,
-      priceMax: draftPriceHigh === PRICE_MAX ? undefined : draftPriceHigh,
-    });
-    closeRow();
+  function handleMileageHighChange(nextHigh: number) {
+    onChange({ ...value, mileageMax: nextHigh === MILEAGE_MAX ? undefined : nextHigh });
+  }
+  function handlePriceLowChange(nextLow: number) {
+    onChange({ ...value, priceMin: nextLow === PRICE_MIN ? undefined : nextLow });
+  }
+  function handlePriceHighChange(nextHigh: number) {
+    onChange({ ...value, priceMax: nextHigh === PRICE_MAX ? undefined : nextHigh });
   }
 
   function confirmChoice() {
@@ -250,8 +226,12 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
     };
   }
 
-  const clearManufacturer = stop(() => onChange({}));
-  const clearModel = stop(() => onChange({ manufacturerId: value.manufacturerId }));
+  const clearManufacturer = stop(() =>
+    onChange({ ...value, manufacturerId: undefined, modelGroupId: undefined, modelId: undefined, trimId: undefined, yearFrom: undefined, yearTo: undefined })
+  );
+  const clearModel = stop(() =>
+    onChange({ ...value, modelGroupId: undefined, modelId: undefined, trimId: undefined, yearFrom: undefined, yearTo: undefined })
+  );
   const clearTrim = stop(() => onChange({ ...value, trimId: undefined }));
   const clearYear = stop(() => onChange({ ...value, yearFrom: undefined, yearTo: undefined }));
   const clearMileage = stop(() => onChange({ ...value, mileageMin: undefined, mileageMax: undefined }));
@@ -270,8 +250,6 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
 
   const yearMin = selectedModel?.startYear ?? FALLBACK_MIN_YEAR;
   const yearMax = selectedModel?.endYear ?? CURRENT_YEAR;
-  const yearMinOptions = range(yearMin, yearMax);
-  const yearMaxOptions = range(value.yearFrom ?? yearMin, yearMax);
 
   const fuelOptions = facets?.fuel ?? [];
   const transmissionOptions = facets?.transmission ?? [];
@@ -332,96 +310,6 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
           <OptionItem key={t.id} label={t.name} selected={value.trimId === t.id} onClick={() => selectTrim(t.id)} />
         ))}
       </OptionListView>
-    );
-  }
-
-  if (activeRow === 'year' && yearStep === 'min') {
-    return (
-      <OptionListView title="최소 연식 선택" onBack={closeRow}>
-        <OptionItem label="전체" selected={!value.yearFrom} onClick={() => selectYearMin(undefined)} />
-        {yearMinOptions.map((y) => (
-          <OptionItem key={y} label={`${y}년`} selected={value.yearFrom === y} onClick={() => selectYearMin(y)} />
-        ))}
-      </OptionListView>
-    );
-  }
-
-  if (activeRow === 'year' && yearStep === 'max') {
-    return (
-      <OptionListView title="최대 연식 선택" onBack={() => setYearStep('min')}>
-        <OptionItem label="전체" selected={!value.yearTo} onClick={() => selectYearMax(undefined)} />
-        {yearMaxOptions.map((y) => (
-          <OptionItem key={y} label={`${y}년`} selected={value.yearTo === y} onClick={() => selectYearMax(y)} />
-        ))}
-      </OptionListView>
-    );
-  }
-
-  if (activeRow === 'mileage') {
-    return (
-      <div className="filter-panel">
-        <div className="filter-subview-header">
-          <button className="filter-subview-back" onClick={closeRow} aria-label="뒤로">
-            ‹
-          </button>
-          주행거리 선택
-        </div>
-        <div className="filter-slider-body">
-          <div className="filter-slider-value">
-            {formatBoundedRange(draftMileageLow, draftMileageHigh, MILEAGE_MIN, MILEAGE_MAX, formatMileage) ?? '전체'}
-          </div>
-          <RangeSlider
-            min={MILEAGE_MIN}
-            max={MILEAGE_MAX}
-            step={MILEAGE_STEP}
-            low={draftMileageLow}
-            high={draftMileageHigh}
-            onLowChange={setDraftMileageLow}
-            onHighChange={setDraftMileageHigh}
-          />
-        </div>
-        <div className="filter-bottom-bar">
-          <div className="filter-bottom-bar-inner">
-            <button className="btn-primary" onClick={confirmMileage}>
-              확인
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeRow === 'price') {
-    return (
-      <div className="filter-panel">
-        <div className="filter-subview-header">
-          <button className="filter-subview-back" onClick={closeRow} aria-label="뒤로">
-            ‹
-          </button>
-          가격 선택
-        </div>
-        <div className="filter-slider-body">
-          <div className="filter-slider-value">
-            {formatBoundedRange(draftPriceLow, draftPriceHigh, PRICE_MIN, PRICE_MAX, formatPrice) ?? '전체'}
-          </div>
-          <RangeSlider
-            min={PRICE_MIN}
-            max={PRICE_MAX}
-            step={PRICE_STEP}
-            low={draftPriceLow}
-            high={draftPriceHigh}
-            onLowChange={setDraftPriceLow}
-            onHighChange={setDraftPriceHigh}
-          />
-        </div>
-        <div className="filter-bottom-bar">
-          <div className="filter-bottom-bar-inner">
-            <button className="btn-primary" onClick={confirmPrice}>
-              확인
-            </button>
-          </div>
-        </div>
-      </div>
     );
   }
 
@@ -496,24 +384,57 @@ export default function SearchFilterPanel({ value, onChange, onSearch }: Props) 
 
         <div className="filter-section-divider" />
 
-        <FilterRow
+        <RangeAccordionRow
           label="연식"
           value={formatYearRange(value.yearFrom, value.yearTo)}
-          onClick={() => openRow('year')}
+          expanded={expandedRow === 'year'}
+          onToggle={() => toggleExpanded('year')}
           onClear={value.yearFrom || value.yearTo ? clearYear : undefined}
-        />
-        <FilterRow
+        >
+          <RangeSlider
+            min={yearMin}
+            max={yearMax}
+            step={1}
+            low={value.yearFrom ?? yearMin}
+            high={value.yearTo ?? yearMax}
+            onLowChange={handleYearLowChange}
+            onHighChange={handleYearHighChange}
+          />
+        </RangeAccordionRow>
+        <RangeAccordionRow
           label="주행거리"
           value={formatBoundedRange(value.mileageMin ?? MILEAGE_MIN, value.mileageMax ?? MILEAGE_MAX, MILEAGE_MIN, MILEAGE_MAX, formatMileage)}
-          onClick={() => openRow('mileage')}
+          expanded={expandedRow === 'mileage'}
+          onToggle={() => toggleExpanded('mileage')}
           onClear={value.mileageMin !== undefined || value.mileageMax !== undefined ? clearMileage : undefined}
-        />
-        <FilterRow
+        >
+          <RangeSlider
+            min={MILEAGE_MIN}
+            max={MILEAGE_MAX}
+            step={MILEAGE_STEP}
+            low={value.mileageMin ?? MILEAGE_MIN}
+            high={value.mileageMax ?? MILEAGE_MAX}
+            onLowChange={handleMileageLowChange}
+            onHighChange={handleMileageHighChange}
+          />
+        </RangeAccordionRow>
+        <RangeAccordionRow
           label="가격"
           value={formatBoundedRange(value.priceMin ?? PRICE_MIN, value.priceMax ?? PRICE_MAX, PRICE_MIN, PRICE_MAX, formatPrice)}
-          onClick={() => openRow('price')}
+          expanded={expandedRow === 'price'}
+          onToggle={() => toggleExpanded('price')}
           onClear={value.priceMin !== undefined || value.priceMax !== undefined ? clearPrice : undefined}
-        />
+        >
+          <RangeSlider
+            min={PRICE_MIN}
+            max={PRICE_MAX}
+            step={PRICE_STEP}
+            low={value.priceMin ?? PRICE_MIN}
+            high={value.priceMax ?? PRICE_MAX}
+            onLowChange={handlePriceLowChange}
+            onHighChange={handlePriceHighChange}
+          />
+        </RangeAccordionRow>
 
         <div className="filter-section-divider" />
 
@@ -584,6 +505,54 @@ function FilterRow({ label, value, sub, disabled, onClick, onClear }: FilterRowP
         </button>
       )}
       <span className="filter-row-chevron">›</span>
+    </div>
+  );
+}
+
+interface RangeAccordionRowProps {
+  label: string;
+  value?: string;
+  expanded: boolean;
+  onToggle: () => void;
+  onClear?: (e: React.MouseEvent) => void;
+  children: React.ReactNode;
+}
+
+// 연식/주행거리/가격 — 다른 화면으로 이동하는 대신, 행을 누르면 그 자리에서 슬라이더가
+// 펼쳐진다. FilterRow와 같은 헤더 모양을 쓰되 화살표 대신 펼침 상태를 보여주는 ⌄/⌃를 쓴다.
+function RangeAccordionRow({ label, value, expanded, onToggle, onClear, children }: RangeAccordionRowProps) {
+  return (
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        className={`filter-row${expanded ? ' filter-row--expanded' : ''}`}
+        onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+      >
+        <span className="filter-row-label">{label}</span>
+        <span className="filter-row-value">
+          <span className="filter-row-value-main">{value ?? '전체'}</span>
+        </span>
+        {onClear && (
+          <button type="button" className="filter-row-clear" onClick={onClear} aria-label={`${label} 조건 해제`}>
+            ✕
+          </button>
+        )}
+        <span className="filter-row-chevron">{expanded ? '⌃' : '⌄'}</span>
+      </div>
+      {expanded && (
+        <div className="filter-row-expand">
+          <div className="filter-slider-value">{value ?? '전체'}</div>
+          {children}
+        </div>
+      )}
     </div>
   );
 }

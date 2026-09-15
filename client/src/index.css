@@ -322,7 +322,9 @@ ul {
   color: var(--text);
   cursor: pointer;
 }
-.filter-row:last-of-type {
+/* 마지막 행에서만 하단 테두리를 없앤다 — 아코디언 행은 헤더가 wrapper div로 한 겹 더
+   싸여있어 :last-of-type만으로는 안 되고, filter-panel의 직계 마지막 자식인지로 판단한다. */
+.filter-panel > .filter-row:last-child {
   border-bottom: none;
 }
 .filter-row:hover:not(.filter-row--disabled) {
@@ -331,6 +333,9 @@ ul {
 .filter-row--disabled {
   color: var(--muted);
   cursor: not-allowed;
+}
+.filter-row--expanded {
+  background: var(--muted-soft);
 }
 .filter-row-label {
   font-weight: 600;
@@ -525,9 +530,11 @@ ul {
   color: var(--muted);
 }
 
-/* 주행거리/가격 — 양끝 핸들 range 슬라이더 */
-.filter-slider-body {
-  padding: 24px 20px 20px;
+/* 연식/주행거리/가격 — 행을 누르면 그 자리에서 펼쳐지는 슬라이더 영역 */
+.filter-row-expand {
+  padding: 18px 20px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
 }
 .filter-slider-value {
   text-align: center;
