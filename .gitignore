@@ -7,5 +7,6 @@ coverage/
 *.local
 
 server/db/*.sqlite
+server/db/backups/
 server/uploads/*
 !server/uploads/.gitkeep

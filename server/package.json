@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node index.js",
     "test": "jest",
-    "seed": "node db/seed.js"
+    "seed": "node db/seed.js",
+    "seed:cars": "node db/seedCars.js"
   },
   "jest": {
     "testPathIgnorePatterns": [
