@@ -4,7 +4,7 @@ import { type Car, type CarInput, createCar, getCar, resolveImageUrl, updateCar 
 import { ApiError } from '../api/client';
 import Header from '../components/Header';
 import RegistrationOcrUpload from '../components/RegistrationOcrUpload';
-import { type OcrResult } from '../api/ocr';
+import { type OcrCandidate, type OcrResult } from '../api/ocr';
 import VehiclePicker, { type VehiclePickerValue } from '../components/VehiclePicker';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -60,6 +60,11 @@ export default function CarFormPage() {
   }
 
   function handleOcrResult(result: OcrResult) {
+    // 새 업로드마다 이전 업로드의 후보/트림 힌트는 항상 무효화한다 — 그렇지 않으면 이전 결과의
+    // 후보 칩이 화면에 남아 있다가 이번 업로드와 무관한 차종이 잘못 적용될 수 있다.
+    setOcrCandidates(undefined);
+    setCandidateTrimIds([]);
+
     if (result.ocrStatus !== 'ok') return;
 
     if (result.firstRegisteredYear) {
@@ -87,7 +92,7 @@ export default function CarFormPage() {
     setCandidateTrimIds(result.trimHint?.candidateTrimIds ?? []);
   }
 
-  function applyOcrCandidate(candidate: NonNullable<typeof ocrCandidates>[number]) {
+  function applyOcrCandidate(candidate: OcrCandidate) {
     setVehicle({
       manufacturerId: candidate.manufacturerId,
       modelGroupId: candidate.modelGroupId,
