@@ -129,18 +129,13 @@ export default function SearchResultsPage() {
   const [loading, setLoading] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
 
-  const hasConditions = Array.from(searchParams.keys()).some((key) => !['sort', 'page', 'pageSize'].includes(key));
   const page = Number(searchParams.get('page') || '1');
   const sort = searchParams.get('sort') || 'latest';
   const pageSize = 20;
 
+  // 조건을 하나도 안 걸어도(검색창만 눌러 바로 들어온 경우 등) 전체 매물을 보여준다 —
+  // "조건이 없으면 검색하지 않는다"가 아니라 "조건이 없으면 전체가 조건"으로 취급한다.
   useEffect(() => {
-    if (!hasConditions) {
-      setItems([]);
-      setTotal(0);
-      setFacets(null);
-      return;
-    }
     setLoading(true);
     const query = Object.fromEntries(searchParams.entries());
     searchCars(query)
@@ -209,93 +204,87 @@ export default function SearchResultsPage() {
           ← 조건 다시 선택
         </Link>
 
-        {!hasConditions && <p style={{ marginTop: 40, color: 'var(--text-soft)' }}>검색 조건을 선택해주세요.</p>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '20px 0' }}>
+          {chips.map(([key, val]) => (
+            <button key={key} className="chip" onClick={() => removeKeys([key])}>
+              {CHIP_LABELS[key]}: {val} ✕
+            </button>
+          ))}
+        </div>
 
-        {hasConditions && (
-          <>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '20px 0' }}>
-              {chips.map(([key, val]) => (
-                <button key={key} className="chip" onClick={() => removeKeys([key])}>
-                  {CHIP_LABELS[key]}: {val} ✕
-                </button>
-              ))}
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ color: 'var(--text-soft)', fontSize: 14 }}>
+            전체 <strong style={{ color: 'var(--text)' }}>{total}</strong>건
+          </div>
+          <select
+            className="input"
+            style={{ width: 'auto' }}
+            value={sort}
+            onChange={(e) => handleSortChange(e.target.value)}
+          >
+            {Object.entries(SORT_LABELS).map(([sortValue, label]) => (
+              <option key={sortValue} value={sortValue}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ color: 'var(--text-soft)', fontSize: 14 }}>
-                전체 <strong style={{ color: 'var(--text)' }}>{total}</strong>건
-              </div>
-              <select
-                className="input"
-                style={{ width: 'auto' }}
-                value={sort}
-                onChange={(e) => handleSortChange(e.target.value)}
-              >
-                {Object.entries(SORT_LABELS).map(([sortValue, label]) => (
-                  <option key={sortValue} value={sortValue}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {loading && <p style={{ color: 'var(--text-soft)' }}>불러오는 중...</p>}
 
-            {loading && <p style={{ color: 'var(--text-soft)' }}>불러오는 중...</p>}
-
-            {!loading && total === 0 && (
-              <div style={{ padding: '32px 0', color: 'var(--text-soft)' }}>
-                <p style={{ marginBottom: 12 }}>조건에 맞는 매물이 없습니다.</p>
-                {(suggestions.length > 0 || yearActive) && (
-                  <>
-                    <p style={{ marginBottom: 8, fontSize: 13 }}>이렇게 조건을 풀어보세요:</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {suggestions.map((s) => (
-                        <button key={s.keys.join(',')} className="chip" onClick={() => removeKeys(s.keys)}>
-                          {s.label} 조건 해제 → {s.count}건
-                        </button>
-                      ))}
-                      {yearActive && (
-                        <button className="chip" onClick={() => removeKeys(['yearFrom', 'yearTo'])}>
-                          연식 조건 해제
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+        {!loading && total === 0 && (
+          <div style={{ padding: '32px 0', color: 'var(--text-soft)' }}>
+            <p style={{ marginBottom: 12 }}>조건에 맞는 매물이 없습니다.</p>
+            {(suggestions.length > 0 || yearActive) && (
+              <>
+                <p style={{ marginBottom: 8, fontSize: 13 }}>이렇게 조건을 풀어보세요:</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {suggestions.map((s) => (
+                    <button key={s.keys.join(',')} className="chip" onClick={() => removeKeys(s.keys)}>
+                      {s.label} 조건 해제 → {s.count}건
+                    </button>
+                  ))}
+                  {yearActive && (
+                    <button className="chip" onClick={() => removeKeys(['yearFrom', 'yearTo'])}>
+                      연식 조건 해제
+                    </button>
+                  )}
+                </div>
+              </>
             )}
+          </div>
+        )}
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                gap: 24,
-                padding: '16px 0',
-              }}
-            >
-              {items.map((car) => (
-                <CarCard
-                  key={car.id}
-                  car={car}
-                  favorited={favoriteIds.has(car.id)}
-                  onToggleFavorite={user ? () => handleToggleFavorite(car.id) : undefined}
-                />
-              ))}
-            </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+            gap: 24,
+            padding: '16px 0',
+          }}
+        >
+          {items.map((car) => (
+            <CarCard
+              key={car.id}
+              car={car}
+              favorited={favoriteIds.has(car.id)}
+              onToggleFavorite={user ? () => handleToggleFavorite(car.id) : undefined}
+            />
+          ))}
+        </div>
 
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 24 }}>
-                <button className="btn-ghost" disabled={page <= 1} onClick={() => goToPage(page - 1)}>
-                  이전
-                </button>
-                <span style={{ padding: '10px 0', color: 'var(--text-soft)' }}>
-                  {page} / {totalPages}
-                </span>
-                <button className="btn-ghost" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>
-                  다음
-                </button>
-              </div>
-            )}
-          </>
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 24 }}>
+            <button className="btn-ghost" disabled={page <= 1} onClick={() => goToPage(page - 1)}>
+              이전
+            </button>
+            <span style={{ padding: '10px 0', color: 'var(--text-soft)' }}>
+              {page} / {totalPages}
+            </span>
+            <button className="btn-ghost" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>
+              다음
+            </button>
+          </div>
         )}
       </div>
     </div>
