@@ -329,13 +329,137 @@ const CATALOG = [
         name: 'K5',
         models: [
           {
-            name: 'DL3',
+            name: 'K5 (JF)',
+            powertrain: '일반',
+            startYear: 2015,
+            endYear: 2017,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.7 프레스티지', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'K5 하이브리드 (JF)',
+            powertrain: '하이브리드',
+            startYear: 2015,
+            endYear: 2017,
+            trims: [{ name: '하이브리드 2.0 노블레스', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 K5 (JF)',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2021,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
+            ],
+          },
+          {
+            name: '더 뉴 K5 하이브리드 (JF)',
+            powertrain: '하이브리드',
+            startYear: 2018,
+            endYear: 2019, // 월 불확실: 단종 시점은 후속 세대 출시일 기준 역산
+            trims: [{ name: '하이브리드 2.0 프레스티지', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: 'K5 (DL3)',
             powertrain: '일반',
             startYear: 2019,
+            endYear: 2022,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: 'LPG 2.0 프레스티지', fuelType: 'LPG', transmission: '자동' },
+              { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
+            ],
+          },
+          {
+            name: 'K5 하이브리드 (DL3)',
+            powertrain: '하이브리드',
+            startYear: 2020, // 월 불확실: 출시월 출처 상충(연도만 확정)
+            endYear: 2022,
+            trims: [{ name: '하이브리드 2.0 프레스티지', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 K5 (DL3)',
+            powertrain: '일반',
+            startYear: 2023,
             endYear: null,
             trims: [
-              { name: '가솔린 2.0 노블레스', fuelType: '가솔린', transmission: '자동' },
-              { name: '가솔린 1.6 터보 노블레스', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
+            ],
+          },
+          {
+            name: '더 뉴 K5 하이브리드 (DL3)',
+            powertrain: '하이브리드',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '하이브리드 2.0 프레스티지', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 2.0 시그니처', fuelType: '하이브리드', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '쏘렌토',
+        models: [
+          {
+            name: '쏘렌토 (UM)',
+            powertrain: '일반',
+            startYear: 2014, // 월 불확실: 출시 정확한 월 미확인(연도는 확실)
+            endYear: 2016,
+            trims: [
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 2.4 스마트', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 쏘렌토 (UM)',
+            powertrain: '일반',
+            startYear: 2017,
+            endYear: 2019,
+            trims: [
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 2.4 스마트', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '쏘렌토 (MQ4)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 2.5 터보 시그니처', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '쏘렌토 하이브리드 (MQ4)',
+            powertrain: '하이브리드',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [{ name: '하이브리드 1.6 터보 노블레스', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 쏘렌토 (MQ4)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 2.5 터보 시그니처', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 쏘렌토 하이브리드 (MQ4)',
+            powertrain: '하이브리드',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '하이브리드 1.6 터보 노블레스', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 1.6 터보 그래비티', fuelType: '하이브리드', transmission: '자동' },
             ],
           },
         ],
@@ -344,11 +468,143 @@ const CATALOG = [
         name: '스포티지',
         models: [
           {
-            name: 'NQ5',
+            name: '스포티지 (QL)',
+            powertrain: '일반',
+            startYear: 2015,
+            endYear: 2017,
+            trims: [
+              { name: '디젤 2.0 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            // 실제 공식 서브네임은 "스포티지 더 볼드"(2018.07 부분변경)
+            name: '스포티지 더 볼드 (QL)',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2020,
+            trims: [
+              { name: '디젤 2.0 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
+            ],
+          },
+          {
+            name: '스포티지 (NQ5)',
             powertrain: '일반',
             startYear: 2021,
+            endYear: 2023,
+            trims: [
+              { name: '디젤 2.0 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
+            ],
+          },
+          {
+            name: '스포티지 하이브리드 (NQ5)',
+            powertrain: '하이브리드',
+            startYear: 2021,
+            endYear: 2023,
+            trims: [{ name: '하이브리드 1.6 터보 시그니처', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 스포티지 (NQ5)',
+            powertrain: '일반',
+            startYear: 2024,
             endYear: null,
-            trims: [{ name: '디젤 1.6 시그니처', fuelType: '디젤', transmission: '자동' }],
+            trims: [
+              { name: '디젤 2.0 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '카니발',
+        models: [
+          {
+            name: '올 뉴 카니발 (YP)',
+            powertrain: '일반',
+            startYear: 2014,
+            endYear: 2017,
+            trims: [
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 3.3 노블레스', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 카니발 (YP)',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2020,
+            trims: [
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 3.3 노블레스', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '카니발 (KA4)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [
+              { name: '디젤 2.2 프레스티지 9인승', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 3.5 시그니처', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 카니발 (KA4)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '디젤 2.2 프레스티지 9인승', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 3.5 그래비티', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 카니발 하이브리드 (KA4)',
+            powertrain: '하이브리드',
+            startYear: 2023,
+            endYear: null,
+            trims: [{ name: '하이브리드 1.6 터보 시그니처 7인승', fuelType: '하이브리드', transmission: '자동' }],
+          },
+        ],
+      },
+      {
+        name: 'K8',
+        models: [
+          {
+            name: 'K8 (GL3)',
+            powertrain: '일반',
+            startYear: 2021,
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 2.5 노블레스', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 3.5 시그니처', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'K8 하이브리드 (GL3)',
+            powertrain: '하이브리드',
+            startYear: 2021,
+            endYear: 2023,
+            trims: [{ name: '하이브리드 1.6 터보 시그니처', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 K8 (GL3)',
+            powertrain: '일반',
+            startYear: 2024,
+            endYear: null,
+            trims: [
+              { name: '가솔린 2.5 노블레스', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 3.5 시그니처', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 K8 하이브리드 (GL3)',
+            powertrain: '하이브리드',
+            startYear: 2024,
+            endYear: null,
+            trims: [{ name: '하이브리드 1.6 터보 시그니처', fuelType: '하이브리드', transmission: '자동' }],
           },
         ],
       },
