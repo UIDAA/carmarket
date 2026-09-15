@@ -1093,6 +1093,153 @@ const CATALOG = [
       },
     ],
   },
+  {
+    // 웹 검증: WebSearch 예산 소진 후 WebFetch로 위키백과/나무위키 교차 확인.
+    manufacturer: '쉐보레',
+    modelGroups: [
+      {
+        name: '트레일블레이저',
+        models: [
+          {
+            name: '트레일블레이저 (9BYC)',
+            powertrain: '일반',
+            startYear: 2020, // 월 불확실: 출시월 나무위키 단독 출처, 연도는 확실
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 터보 1.35 LS', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.35 RS', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 트레일블레이저',
+            powertrain: '일반',
+            startYear: 2023, // 월 불확실: 출시월 나무위키 단독 출처, 연도는 확실
+            endYear: null,
+            trims: [
+              { name: '가솔린 터보 1.35 LT', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.35 프리미어', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '트랙스',
+        models: [
+          {
+            name: '트랙스 (U200)',
+            powertrain: '일반',
+            startYear: 2013,
+            endYear: 2016,
+            trims: [
+              { name: '가솔린 터보 1.4 LS', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.6 LT 레더패키지', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 트랙스 (U200)',
+            powertrain: '일반',
+            startYear: 2016,
+            endYear: 2022, // 월 불확실: 단종월 출처 상충(10월/11월), 연도는 확실
+            trims: [
+              { name: '가솔린 터보 1.4 LS', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.4 프리미엄', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '트랙스 크로스오버 (9BQC)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '가솔린 터보 1.2 LS', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.2 ACTIV', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '말리부',
+        models: [
+          {
+            name: '올 뉴 말리부',
+            powertrain: '일반',
+            startYear: 2016,
+            endYear: 2018,
+            trims: [
+              { name: '가솔린 터보 1.5 LT', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 2.0 LTZ', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '올 뉴 말리부 하이브리드',
+            powertrain: '하이브리드',
+            startYear: 2016,
+            endYear: 2018,
+            trims: [{ name: '하이브리드 1.8 LT 디럭스', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 말리부',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 터보 1.3 LS', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 2.0 프리미어', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 말리부 하이브리드',
+            powertrain: '하이브리드',
+            startYear: 2019, // 월 불확실: 판매 기간이 짧아 정확한 시작·종료월 미확인, 연도는 확실
+            endYear: 2023,
+            trims: [{ name: '하이브리드 2.0 프리미어', fuelType: '하이브리드', transmission: '자동' }],
+          },
+        ],
+      },
+      {
+        name: '스파크',
+        models: [
+          {
+            name: '더 넥스트 스파크',
+            powertrain: '일반',
+            startYear: 2015,
+            endYear: 2018,
+            trims: [
+              { name: '가솔린 1.0 LS', fuelType: '가솔린', transmission: '수동' },
+              { name: '가솔린 1.0 LT+', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 스파크',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 1.0 LS', fuelType: '가솔린', transmission: '수동' },
+              { name: '가솔린 1.0 프리미어', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '이쿼녹스',
+        models: [
+          // 이전 세대(초기 출시) 정보는 세대번호(2세대/3세대)·출시연도·엔진 라인업이 위키백과와
+          // 나무위키 사이에서 서로 상충해 규칙에 따라 제외함 — 페이스리프트인 이 행만 확정.
+          {
+            name: '더 넥스트 이쿼녹스',
+            powertrain: '일반',
+            startYear: 2022,
+            endYear: 2024,
+            trims: [
+              { name: '가솔린 터보 1.5 LT', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.5 Premier', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 // 마이그레이션이 시드보다 먼저 도는 순서상, 시드 대상과 같은 이름의 제조사 stub이 findOrCreate로
