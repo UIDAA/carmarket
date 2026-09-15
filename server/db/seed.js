@@ -808,17 +808,150 @@ const CATALOG = [
     ],
   },
   {
+    // 웹 검증: WebSearch 예산 소진 후 WebFetch로 위키백과/나무위키 교차 확인.
     manufacturer: '르노코리아',
     modelGroups: [
       {
         name: 'SM6',
         models: [
           {
-            name: '1세대',
+            name: 'SM6 (초기형)',
             powertrain: '일반',
             startYear: 2016,
+            endYear: 2020,
+            trims: [
+              { name: '디젤 1.5 SE', fuelType: '디젤', transmission: '자동' },
+              { name: '가솔린 터보 1.6 RE', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 SM6',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2025, // 월 불확실: 종료월 출처 상충(3월/11월), 연도는 확실
+            trims: [
+              { name: '가솔린 터보 1.3 LE', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.8 Inspire', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'QM6',
+        models: [
+          {
+            name: 'QM6 (HZG)',
+            powertrain: '일반',
+            startYear: 2016,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 2.0 SE', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.0 LE', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 QM6 (1차 F/L)',
+            powertrain: '일반',
+            startYear: 2019,
+            endYear: 2020,
+            trims: [
+              { name: 'LPe 2.0 LE', fuelType: 'LPG', transmission: '자동' },
+              { name: '디젤 1.7 RE', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '뉴 QM6 (2차 F/L)',
+            powertrain: '일반',
+            startYear: 2020,
             endYear: 2023,
-            trims: [{ name: '가솔린 2.0 SE', fuelType: '가솔린', transmission: '자동' }],
+            trims: [
+              { name: '가솔린 2.0 LE', fuelType: '가솔린', transmission: '자동' },
+              { name: 'LPe 2.0 프리미에르', fuelType: 'LPG', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 QM6 (3차 F/L)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null, // 종료 시점 출처 상충(2025 vs 2026) — 확정 안 돼 진행중으로 처리
+            trims: [
+              { name: '가솔린 2.0 LE Signature', fuelType: '가솔린', transmission: '자동' },
+              { name: 'LPe 2.0 프리미에르', fuelType: 'LPG', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'XM3',
+        models: [
+          {
+            name: 'XM3 (초기형)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2024,
+            trims: [
+              { name: '가솔린 터보 1.3 LE', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 RE Signature', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'XM3 하이브리드 (초기형)',
+            powertrain: '하이브리드',
+            startYear: 2022,
+            endYear: 2024,
+            trims: [{ name: 'E-Tech 하이브리드 RE', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: 'XM3 (아르카나)',
+            powertrain: '일반',
+            startYear: 2024, // 월 불확실: 정확한 출시일 미확인, 연도는 확실
+            endYear: null,
+            trims: [
+              { name: '가솔린 터보 1.3 Evolution', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.3 Iconic', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'XM3 하이브리드 (아르카나)',
+            powertrain: '하이브리드',
+            startYear: 2024,
+            endYear: null,
+            trims: [{ name: 'E-Tech 하이브리드 Techno', fuelType: '하이브리드', transmission: '자동' }],
+          },
+        ],
+      },
+      {
+        name: 'SM5',
+        models: [
+          {
+            name: '뉴 SM5 (L43)',
+            powertrain: '일반',
+            startYear: 2010,
+            endYear: 2012,
+            trims: [
+              { name: '가솔린 2.0 PE', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.5 SE', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '뉴 SM5 플래티넘 (L43)',
+            powertrain: '일반',
+            startYear: 2012,
+            endYear: 2015,
+            trims: [
+              { name: '가솔린 2.0 SE', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.5 LE', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'SM5 노바 (L43)',
+            powertrain: '일반',
+            startYear: 2015,
+            endYear: 2019, // 월 불확실: 생산중단월 출처 상충(6월/12월), 연도는 확실
+            trims: [
+              { name: '가솔린 2.0 PE Plus', fuelType: '가솔린', transmission: '자동' },
+              { name: 'LPG 2.0 SE', fuelType: 'LPG', transmission: '자동' },
+            ],
           },
         ],
       },
