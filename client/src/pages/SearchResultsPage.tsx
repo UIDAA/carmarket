@@ -87,11 +87,45 @@ function saveRecentSearch(searchParams: URLSearchParams, facets: SearchResult['f
   localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
 }
 
+interface Suggestion {
+  keys: string[];
+  label: string;
+  count: number;
+}
+
+// 지금 걸려있는 필터 중 자기제외 파셋이 있는 차원(카탈로그 4단계 + 연료/지역/가격/주행거리)만
+// 대상으로, "이 조건을 없애면 몇 건이 나오는지"를 이미 받아온 facets로 계산한다(추가 요청 없음).
+// 파셋 배열의 각 항목은 이미 그 차원 자신만 제외하고 나머지 필터를 전부 반영한 카운트이므로,
+// 배열 전체를 합하면 "그 차원의 필터를 없앴을 때"의 건수가 된다.
+function buildFilterSuggestions(searchParams: URLSearchParams, facets: SearchResult['facets']): Suggestion[] {
+  const groups: { keys: string[]; label: string; facetArray: { count: number }[] | null | undefined }[] = [
+    { keys: ['manufacturerId'], label: '브랜드', facetArray: facets.manufacturers },
+    { keys: ['modelGroupId'], label: '모델', facetArray: facets.modelGroups },
+    { keys: ['modelId'], label: '세대', facetArray: facets.models },
+    { keys: ['trimId'], label: '트림', facetArray: facets.trims },
+    { keys: ['fuel'], label: '연료', facetArray: facets.fuel },
+    { keys: ['region'], label: '지역', facetArray: facets.region },
+    { keys: ['priceMin', 'priceMax'], label: '가격', facetArray: facets.priceBuckets },
+    { keys: ['mileageMin', 'mileageMax'], label: '주행거리', facetArray: facets.mileageBuckets },
+  ];
+
+  const suggestions: Suggestion[] = [];
+  for (const { keys, label, facetArray } of groups) {
+    const isActive = keys.some((key) => searchParams.has(key));
+    if (!isActive || !facetArray) continue;
+    const count = facetArray.reduce((sum, item) => sum + item.count, 0);
+    if (count > 0) suggestions.push({ keys, label, count });
+  }
+
+  return suggestions.sort((a, b) => b.count - a.count).slice(0, 3);
+}
+
 export default function SearchResultsPage() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<Car[]>([]);
   const [total, setTotal] = useState(0);
+  const [facets, setFacets] = useState<SearchResult['facets'] | null>(null);
   const [loading, setLoading] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
 
@@ -104,6 +138,7 @@ export default function SearchResultsPage() {
     if (!hasConditions) {
       setItems([]);
       setTotal(0);
+      setFacets(null);
       return;
     }
     setLoading(true);
@@ -112,6 +147,7 @@ export default function SearchResultsPage() {
       .then((res) => {
         setItems(res.items);
         setTotal(res.total);
+        setFacets(res.facets);
         saveRecentSearch(searchParams, res.facets);
       })
       .finally(() => setLoading(false));
@@ -140,9 +176,9 @@ export default function SearchResultsPage() {
     }
   }
 
-  function removeChip(key: string) {
+  function removeKeys(keys: string[]) {
     const next = new URLSearchParams(searchParams);
-    next.delete(key);
+    for (const key of keys) next.delete(key);
     next.delete('page');
     setSearchParams(next);
   }
@@ -162,6 +198,8 @@ export default function SearchResultsPage() {
 
   const chips = Array.from(searchParams.entries()).filter(([key]) => CHIP_LABELS[key]);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const yearActive = searchParams.has('yearFrom') || searchParams.has('yearTo');
+  const suggestions = !loading && total === 0 && facets ? buildFilterSuggestions(searchParams, facets) : [];
 
   return (
     <div>
@@ -177,7 +215,7 @@ export default function SearchResultsPage() {
           <>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '20px 0' }}>
               {chips.map(([key, val]) => (
-                <button key={key} className="chip" onClick={() => removeChip(key)}>
+                <button key={key} className="chip" onClick={() => removeKeys([key])}>
                   {CHIP_LABELS[key]}: {val} ✕
                 </button>
               ))}
@@ -202,6 +240,29 @@ export default function SearchResultsPage() {
             </div>
 
             {loading && <p style={{ color: 'var(--text-soft)' }}>불러오는 중...</p>}
+
+            {!loading && total === 0 && (
+              <div style={{ padding: '32px 0', color: 'var(--text-soft)' }}>
+                <p style={{ marginBottom: 12 }}>조건에 맞는 매물이 없습니다.</p>
+                {(suggestions.length > 0 || yearActive) && (
+                  <>
+                    <p style={{ marginBottom: 8, fontSize: 13 }}>이렇게 조건을 풀어보세요:</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {suggestions.map((s) => (
+                        <button key={s.keys.join(',')} className="chip" onClick={() => removeKeys(s.keys)}>
+                          {s.label} 조건 해제 → {s.count}건
+                        </button>
+                      ))}
+                      {yearActive && (
+                        <button className="chip" onClick={() => removeKeys(['yearFrom', 'yearTo'])}>
+                          연식 조건 해제
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             <div
               style={{

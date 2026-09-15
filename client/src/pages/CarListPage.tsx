@@ -59,7 +59,7 @@ export default function CarListPage() {
       <div className="page" style={{ paddingTop: 40, paddingBottom: 60 }}>
         <h1 style={{ fontSize: 24, marginBottom: 24 }}>어떤 차를 찾으세요?</h1>
         <div className="card" style={{ padding: 24 }}>
-          <VehiclePicker value={value} onChange={setValue} hideEmpty />
+          <VehiclePicker value={value} onChange={setValue} />
           <button className="btn-primary" style={{ marginTop: 16 }} onClick={handleSearch}>
             검색
           </button>
