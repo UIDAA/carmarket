@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import VehiclePicker, { type VehiclePickerValue } from '../components/VehiclePicker';
+import SearchFilterPanel from '../components/SearchFilterPanel';
+import { type VehiclePickerValue } from '../components/VehiclePicker';
 import { type Manufacturer, listManufacturers, formatManufacturerLabel } from '../api/catalog';
+
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 const RECENT_SEARCHES_KEY = 'carmarket:recentSearches';
 
@@ -29,6 +39,7 @@ export default function CarListPage() {
   const [value, setValue] = useState<VehiclePickerValue>({});
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     listManufacturers().then(setManufacturers);
@@ -50,6 +61,7 @@ export default function CarListPage() {
   const popular = [...manufacturers].sort((a, b) => b.count - a.count).slice(0, 3);
 
   function handleSearch() {
+    setFilterOpen(false);
     navigate(`/search?${buildQueryString(value)}`);
   }
 
@@ -57,13 +69,10 @@ export default function CarListPage() {
     <div>
       <Header />
       <div className="page" style={{ paddingTop: 40, paddingBottom: 60 }}>
-        <h1 style={{ fontSize: 24, marginBottom: 24 }}>어떤 차를 찾으세요?</h1>
-        <div className="card" style={{ padding: 24 }}>
-          <VehiclePicker value={value} onChange={setValue} />
-          <button className="btn-primary" style={{ marginTop: 16 }} onClick={handleSearch}>
-            검색
-          </button>
-        </div>
+        <button className="search-entry" onClick={() => setFilterOpen(true)}>
+          <SearchIcon />
+          <span>어떤 차를 찾고 있나요?</span>
+        </button>
 
         {popular.length > 0 && (
           <div style={{ marginTop: 32 }}>
@@ -91,6 +100,20 @@ export default function CarListPage() {
           </div>
         )}
       </div>
+
+      {filterOpen && (
+        <div className="filter-overlay">
+          <div className="filter-overlay-header">
+            <button className="filter-overlay-close" onClick={() => setFilterOpen(false)} aria-label="닫기">
+              ✕
+            </button>
+            <strong>검색 조건</strong>
+          </div>
+          <div className="filter-overlay-body">
+            <SearchFilterPanel value={value} onChange={setValue} onSearch={handleSearch} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
