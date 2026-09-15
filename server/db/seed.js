@@ -610,17 +610,153 @@ const CATALOG = [
     ],
   },
   {
+    // 웹 검증: WebSearch 예산 소진 후 WebFetch로 위키백과/나무위키 교차 확인.
+    // G70/GV70/GV80은 2세대가 아직 없거나(2세대 출시 정보가 출처 간 상충/미확정) 실제로
+    // 루트 세대가 1개뿐이라 "최근 2세대" 기준을 채우지 못함 — 데이터 누락이 아니라 실제 현황임.
     manufacturer: '제네시스',
     modelGroups: [
       {
         name: 'G80',
         models: [
           {
-            name: 'RG3',
+            name: 'G80 (DH)',
+            powertrain: '일반',
+            startYear: 2016,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 터보 3.3 럭셔리', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'G80 (RG3)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 터보 2.5 프리미엄', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.5 스포츠', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 G80 (RG3 PE)',
+            powertrain: '일반',
+            startYear: 2024, // 월 불확실: 출시월 나무위키 미확인, 연도는 확실
+            endYear: null,
+            trims: [
+              { name: '가솔린 터보 2.5 프리미엄', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.5 스포츠', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'G80 전동화 (RG3)',
+            powertrain: '전기',
+            startYear: 2021, // 월 불확실: 정확한 월 미확인, 연도는 확실
+            endYear: 2023,
+            trims: [{ name: '전기 스탠다드', fuelType: '전기', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 G80 전동화 (RG3 PE)',
+            powertrain: '전기',
+            startYear: 2024,
+            endYear: null,
+            trims: [{ name: '전기 스탠다드', fuelType: '전기', transmission: '자동' }],
+          },
+        ],
+      },
+      {
+        name: 'G70',
+        models: [
+          {
+            name: 'G70 (IK)',
+            powertrain: '일반',
+            startYear: 2017,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 터보 2.0 스탠다드', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.3 스포츠', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 G70 (IK PE)',
             powertrain: '일반',
             startYear: 2020,
             endYear: null,
-            trims: [{ name: '가솔린 3.5 터보', fuelType: '가솔린', transmission: '자동' }],
+            trims: [
+              { name: '가솔린 터보 2.0 스탠다드', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 2.5 스포츠', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.3 스포츠', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'GV70',
+        models: [
+          {
+            name: 'GV70 (JK1)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 터보 2.5 프리미엄', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.5 스포츠', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.2 프리미엄', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'GV70 페이스리프트 (JK1 PE)',
+            powertrain: '일반',
+            startYear: 2024,
+            endYear: null,
+            trims: [
+              { name: '가솔린 터보 2.5 프리미엄', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.5 스포츠', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: 'GV70 전동화 (JK1)',
+            powertrain: '전기',
+            startYear: 2022,
+            endYear: 2023,
+            trims: [{ name: '전기 스탠다드', fuelType: '전기', transmission: '자동' }],
+          },
+          {
+            name: 'GV70 전동화 페이스리프트 (JK1 PE)',
+            powertrain: '전기',
+            startYear: 2024,
+            endYear: null,
+            trims: [{ name: '전기 스탠다드', fuelType: '전기', transmission: '자동' }],
+          },
+        ],
+      },
+      {
+        name: 'GV80',
+        models: [
+          {
+            name: 'GV80 (JX1)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [
+              { name: '가솔린 터보 2.5 프리미엄', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.5 스포츠', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 3.0 프리미엄', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            // GV80 쿠페/블랙은 별도 제너레이션이 아니라 이 페이스리프트 안의 바디스타일/에디션
+            // 트림이라 별도 행으로 나누지 않고 트림으로 접었다.
+            name: 'GV80 페이스리프트 (JX1 PE)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '가솔린 터보 2.5 프리미엄', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.5 스포츠', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 3.5 쿠페', fuelType: '가솔린', transmission: '자동' },
+            ],
           },
         ],
       },
