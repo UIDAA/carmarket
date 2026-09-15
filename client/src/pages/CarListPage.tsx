@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import SearchFilterPanel from '../components/SearchFilterPanel';
-import { type VehiclePickerValue } from '../components/VehiclePicker';
+import SearchFilterPanel, { type SearchFilterValue } from '../components/SearchFilterPanel';
 import { type Manufacturer, listManufacturers, formatManufacturerLabel } from '../api/catalog';
 
 function SearchIcon() {
@@ -21,22 +20,18 @@ interface RecentSearch {
   query: string;
 }
 
-function buildQueryString(value: VehiclePickerValue) {
+// SearchFilterValue의 필드명이 실제 검색 쿼리 파라미터명과 그대로 일치하므로 값을 옮겨 담기만 하면 된다.
+function buildQueryString(value: SearchFilterValue) {
   const params = new URLSearchParams();
-  if (value.manufacturerId) params.set('manufacturerId', String(value.manufacturerId));
-  if (value.modelGroupId) params.set('modelGroupId', String(value.modelGroupId));
-  if (value.modelId) params.set('modelId', String(value.modelId));
-  if (value.trimId) params.set('trimId', String(value.trimId));
-  if (value.year) {
-    params.set('yearFrom', String(value.year));
-    params.set('yearTo', String(value.year));
-  }
+  Object.entries(value).forEach(([key, val]) => {
+    if (val !== undefined) params.set(key, String(val));
+  });
   return params.toString();
 }
 
 export default function CarListPage() {
   const navigate = useNavigate();
-  const [value, setValue] = useState<VehiclePickerValue>({});
+  const [value, setValue] = useState<SearchFilterValue>({});
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);

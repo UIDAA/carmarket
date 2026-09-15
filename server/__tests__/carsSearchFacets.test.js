@@ -111,6 +111,36 @@ describe('GET /api/cars/search facets', () => {
     expect(dieselCount).toBe(1);
   });
 
+  it('excludes the transmission dimension itself when counting facets.transmission (self-exclusion)', async () => {
+    const { app, db } = buildTestApp();
+    const automatic = seedTrim(db, { transmission: '자동' });
+    const manual = seedTrim(db, { manufacturerName: '현대', modelGroupName: '싼타페', transmission: '수동' });
+    const token = await registerAndLogin(app);
+    await postCar(app, token, automatic.trimId);
+    await postCar(app, token, manual.trimId);
+
+    const res = await request(app).get('/api/cars/search').query({ transmission: '자동' });
+    expect(res.body.total).toBe(1); // 결과 자체는 자동만
+    const manualCount = res.body.facets.transmission.find((t) => t.value === '수동').count;
+    expect(manualCount).toBe(1); // 파셋은 transmission 조건을 빼고 계산하므로 수동도 보인다
+  });
+
+  it('lists all 17 시도 in the region facet even when a 시도 has zero matching cars', async () => {
+    const { app, db } = buildTestApp();
+    const { trimId } = seedTrim(db);
+    const token = await registerAndLogin(app);
+    await postCar(app, token, trimId, { region: '서울' });
+
+    const res = await request(app).get('/api/cars/search');
+
+    expect(res.body.facets.region.length).toBe(17); // 매물이 없는 시도도 count:0으로 전부 나열됨
+    const busan = res.body.facets.region.find((r) => r.value === '부산');
+    expect(busan).toBeDefined();
+    expect(busan.count).toBe(0);
+    const seoul = res.body.facets.region.find((r) => r.value === '서울');
+    expect(seoul.count).toBe(1);
+  });
+
   it('keeps the region facet correct when combined with a catalog filter (manufacturerId)', async () => {
     const { app, db } = buildTestApp();
     const { manufacturerId, trimId } = seedTrim(db);

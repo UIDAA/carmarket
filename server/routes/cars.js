@@ -4,6 +4,13 @@ const { upload } = require('../middleware/upload');
 
 const ACTIVE_STATUSES = "('판매중', '예약중')";
 
+// 등록 폼(client/src/pages/CarFormPage.tsx)의 SIDO_LIST와 동일한 17개 시도 — 지역 파셋이
+// 실제 매물이 있는 지역뿐 아니라 전체 시도를 항상 나열하도록 이 목록을 기준으로 삼는다.
+const SIDO_LIST = [
+  '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
+  '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
+];
+
 const FROM_CLAUSE = `
   FROM cars
   JOIN trims ON trims.id = cars.trim_id
@@ -61,6 +68,7 @@ function buildSearchConditions(filters, excludeKeys = []) {
   const mileageMin = asNumberOrUndefined(filters.mileageMin);
   const mileageMax = asNumberOrUndefined(filters.mileageMax);
   const region = asScalar(filters.region);
+  const transmission = asScalar(filters.transmission);
 
   if (manufacturerId !== undefined && !exclude.has('manufacturerId')) {
     conditions.push('model_groups.manufacturer_id = ?');
@@ -109,6 +117,10 @@ function buildSearchConditions(filters, excludeKeys = []) {
   if (region && !exclude.has('region')) {
     conditions.push('cars.region = ?');
     params.push(region);
+  }
+  if (transmission && !exclude.has('transmission')) {
+    conditions.push('cars.transmission = ?');
+    params.push(transmission);
   }
 
   return { conditions, params };
@@ -204,11 +216,27 @@ function buildFacets(db, filters) {
     )
     .all(...withoutFuel.params);
 
-  const withoutRegion = buildSearchConditions(filters, ['region']);
-  const region = db
+  const withoutTransmission = buildSearchConditions(filters, ['transmission']);
+  const transmission = db
     .prepare(
-      `SELECT distinct_region.region AS value, COUNT(matched.id) AS count
-       FROM (SELECT DISTINCT region FROM cars WHERE region IS NOT NULL) AS distinct_region
+      `SELECT distinct_transmission.transmission AS value, COUNT(cars.id) AS count
+       FROM (SELECT DISTINCT transmission FROM trims) AS distinct_transmission
+       LEFT JOIN trims ON trims.transmission = distinct_transmission.transmission
+       LEFT JOIN models ON models.id = trims.model_id
+       LEFT JOIN model_groups ON model_groups.id = models.model_group_id
+       LEFT JOIN cars ON cars.trim_id = trims.id AND ${withoutTransmission.conditions.join(' AND ')}
+       GROUP BY distinct_transmission.transmission`
+    )
+    .all(...withoutTransmission.params);
+
+  // 지역은 매물이 있는 시도만이 아니라 전체 17개 시도를 항상 나열한다(등록 폼과 동일 목록) —
+  // SIDO_LIST를 VALUES로 깔아두고 실제 매물을 LEFT JOIN해서 0건인 시도도 빠지지 않게 한다.
+  const withoutRegion = buildSearchConditions(filters, ['region']);
+  const regionPlaceholders = SIDO_LIST.map(() => '(?)').join(', ');
+  const regionRows = db
+    .prepare(
+      `SELECT sido.column1 AS value, COUNT(matched.id) AS count
+       FROM (VALUES ${regionPlaceholders}) AS sido
        LEFT JOIN (
          SELECT cars.id AS id, cars.region AS region
          FROM cars
@@ -216,10 +244,12 @@ function buildFacets(db, filters) {
          JOIN models ON models.id = trims.model_id
          JOIN model_groups ON model_groups.id = models.model_group_id
          WHERE ${withoutRegion.conditions.join(' AND ')}
-       ) AS matched ON matched.region = distinct_region.region
-       GROUP BY distinct_region.region`
+       ) AS matched ON matched.region = sido.column1
+       GROUP BY sido.column1`
     )
-    .all(...withoutRegion.params);
+    .all(...SIDO_LIST, ...withoutRegion.params);
+  const regionCountByValue = new Map(regionRows.map((row) => [row.value, row.count]));
+  const region = SIDO_LIST.map((value) => ({ value, count: regionCountByValue.get(value) || 0 }));
 
   const withoutPrice = buildSearchConditions(filters, ['price']);
   const priceBuckets = PRICE_BUCKETS.map((bucket) => ({
@@ -233,7 +263,7 @@ function buildFacets(db, filters) {
     count: countBucket(db, withoutMileage.conditions, withoutMileage.params, 'mileage', bucket),
   }));
 
-  return { manufacturers, modelGroups, models, trims, fuel, region, priceBuckets, mileageBuckets };
+  return { manufacturers, modelGroups, models, trims, fuel, transmission, region, priceBuckets, mileageBuckets };
 }
 
 function getTrimWithLineage(db, trimId) {

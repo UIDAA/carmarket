@@ -50,6 +50,7 @@ export interface SearchQuery {
   mileageMin?: number | string;
   mileageMax?: number | string;
   region?: string;
+  transmission?: string;
   sort?: 'latest' | 'price_asc' | 'mileage_asc' | 'year_desc';
   page?: number | string;
   pageSize?: number | string;
@@ -71,6 +72,7 @@ export interface Facets {
   models: { id: number; name: string; powertrain: string; startYear: number; endYear: number | null; count: number }[] | null;
   trims: { id: number; name: string; fuelType: string; transmission: string; count: number }[] | null;
   fuel: FacetValueCount[];
+  transmission: FacetValueCount[];
   region: FacetValueCount[];
   priceBuckets: FacetBucket[];
   mileageBuckets: FacetBucket[];
