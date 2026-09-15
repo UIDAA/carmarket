@@ -1,0 +1,29 @@
+services:
+  server:
+    build:
+      context: ./server
+    ports:
+      - '4000:4000'
+    environment:
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:-carmarket-docker-dev-secret}
+      DB_PATH: /app/data/carmarket.sqlite
+    volumes:
+      - db-data:/app/data
+      - uploads-data:/app/uploads
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
+    ports:
+      - '8080:80'
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  uploads-data:

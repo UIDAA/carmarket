@@ -208,7 +208,7 @@ function seedCars(db, { seedValue = 42 } = {}) {
 }
 
 if (require.main === module) {
-  const db = createDb();
+  const db = createDb(process.env.DB_PATH);
   seedCars(db);
 }
 

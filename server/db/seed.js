@@ -1431,7 +1431,7 @@ function reconcileLegacyCars(db) {
 }
 
 if (require.main === module) {
-  const db = createDb();
+  const db = createDb(process.env.DB_PATH);
   seed(db);
   reconcileLegacyCars(db);
   console.log('카탈로그 시드 데이터 적용 완료');
