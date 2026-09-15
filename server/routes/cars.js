@@ -1,6 +1,9 @@
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
+const { ocrUpload } = require('../middleware/ocrUpload');
+const { recognizeRegistration, GeminiError } = require('../services/gemini');
+const { matchCatalog, matchTrimHint } = require('../services/registrationMatcher');
 
 const ACTIVE_STATUSES = "('판매중', '예약중')";
 
@@ -387,6 +390,47 @@ function carsRouter(db) {
       .get(req.params.id);
     if (!car) return res.status(404).json({ error: '매물을 찾을 수 없습니다.' });
     res.json(withDisplayTitle(car));
+  });
+
+  router.post('/ocr', requireAuth, ocrUpload.single('photo'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: '이미지를 첨부해주세요.' });
+
+    let recognized;
+    try {
+      recognized = await recognizeRegistration(req.file.buffer, req.file.mimetype);
+    } catch (err) {
+      const reason = err instanceof GeminiError ? err.reason : 'network';
+      return res.json({ ocrStatus: 'failed', reason });
+    }
+
+    const result = { ocrStatus: 'ok' };
+
+    if (recognized.firstRegisteredDate) {
+      const parsedDate = new Date(recognized.firstRegisteredDate);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        result.firstRegisteredYear = parsedDate.getFullYear();
+        result.firstRegisteredMonth = parsedDate.getMonth() + 1;
+      }
+    }
+
+    const catalogMatch = matchCatalog(db, {
+      modelName: recognized.modelName,
+      fuelType: recognized.fuelType,
+      firstRegisteredDate: recognized.firstRegisteredDate,
+    });
+    result.catalogMatch = catalogMatch;
+
+    if (catalogMatch.confidence === 'strong' && catalogMatch.modelId) {
+      const candidateTrimIds = matchTrimHint(db, catalogMatch.modelId, {
+        displacementCc: recognized.displacementCc,
+        fuelType: recognized.fuelType,
+      });
+      if (candidateTrimIds.length > 0) {
+        result.trimHint = { candidateTrimIds };
+      }
+    }
+
+    res.json(result);
   });
 
   router.post('/', requireAuth, upload.single('photo'), (req, res) => {
