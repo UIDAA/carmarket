@@ -1,6 +1,11 @@
 const { createDb } = require('./schema');
 const { findOrCreate } = require('./findOrCreate');
 
+// 아래 카탈로그는 나무위키/위키백과/다나와/카이즈유/현대차그룹 뉴스룸 등을 교차 확인해 채운
+// 실제 세대 이력이다(2026-09 기준, 웹 검색 리서치). 브랜드당 "최근 2세대"만 남겼고, 단일 출처거나
+// 출처가 상충하는 항목, 2026년 출시 건은 제외했다. "// 월 불확실" 주석이 붙은 항목은 연도는
+// 교차 확인됐지만 정확한 월까지는 확인하지 못한 것 — 실 서비스용 데이터로 교체할 때 이 주석이
+// 붙은 곳부터 다시 확인하면 된다.
 const CATALOG = [
   {
     manufacturer: '현대',
@@ -9,47 +14,61 @@ const CATALOG = [
         name: '아반떼',
         models: [
           {
-            name: 'CN7',
+            name: '아반떼 (AD)',
             powertrain: '일반',
-            startYear: 2020,
-            endYear: null,
+            startYear: 2015,
+            endYear: 2017,
             trims: [
               { name: '가솔린 1.6 스마트', fuelType: '가솔린', transmission: '자동' },
-              { name: '가솔린 1.6 인스퍼레이션', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.6 프리미엄', fuelType: '디젤', transmission: '자동' },
             ],
           },
           {
-            name: 'AD',
+            name: '더 뉴 아반떼 (AD)',
             powertrain: '일반',
-            startYear: 2015,
-            endYear: 2020,
-            trims: [{ name: '가솔린 1.6 스타일', fuelType: '가솔린', transmission: '자동' }],
-          },
-        ],
-      },
-      {
-        name: '그랜저',
-        models: [
-          {
-            name: '그랜저 (GN7)',
-            powertrain: '일반',
-            startYear: 2022,
-            endYear: null,
-            trims: [{ name: '가솔린 3.5 캘리그래피', fuelType: '가솔린', transmission: '자동' }],
+            startYear: 2018,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 1.6 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 스포츠', fuelType: '가솔린', transmission: '자동' },
+            ],
           },
           {
-            name: '그랜저 하이브리드 (GN7)',
+            name: '아반떼 (CN7)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [
+              { name: '가솔린 1.6 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 N라인', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '아반떼 하이브리드 (CN7)',
             powertrain: '하이브리드',
             startYear: 2022,
-            endYear: null,
-            trims: [{ name: '하이브리드 1.6 캘리그래피', fuelType: '하이브리드', transmission: '자동' }],
+            endYear: 2022, // 월 불확실: ino1 단일 출처("2022.03.08 출시") — 연도는 확실
+            trims: [{ name: '하이브리드 1.6 모던', fuelType: '하이브리드', transmission: '자동' }],
           },
           {
-            name: '그랜저 IG',
+            name: '더 뉴 아반떼 (CN7)',
             powertrain: '일반',
-            startYear: 2016,
-            endYear: 2022,
-            trims: [{ name: '가솔린 3.0 익스클루시브', fuelType: '가솔린', transmission: '자동' }],
+            startYear: 2023,
+            endYear: 2025,
+            trims: [
+              { name: '가솔린 1.6 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 N라인', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 아반떼 하이브리드 (CN7)',
+            powertrain: '하이브리드',
+            startYear: 2023,
+            endYear: 2025,
+            trims: [
+              { name: '하이브리드 1.6 모던', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 1.6 인스퍼레이션', fuelType: '하이브리드', transmission: '자동' },
+            ],
           },
         ],
       },
@@ -57,18 +76,247 @@ const CATALOG = [
         name: '쏘나타',
         models: [
           {
-            name: 'DN8',
+            name: '쏘나타 (LF)',
             powertrain: '일반',
-            startYear: 2019,
-            endYear: null,
-            trims: [{ name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' }],
+            startYear: 2014,
+            endYear: 2016,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.7 프리미엄', fuelType: '디젤', transmission: '자동' },
+            ],
           },
           {
-            name: 'DN8 하이브리드',
+            name: '쏘나타 하이브리드 (LF)',
+            powertrain: '하이브리드',
+            startYear: 2015,
+            endYear: 2016,
+            trims: [{ name: '하이브리드 2.0 스마트', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '쏘나타 뉴 라이즈 (LF)',
+            powertrain: '일반',
+            startYear: 2017,
+            endYear: 2018,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 2.0 스포츠', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '쏘나타 뉴 라이즈 하이브리드 (LF)',
+            powertrain: '하이브리드',
+            startYear: 2017,
+            endYear: 2018,
+            trims: [{ name: '하이브리드 2.0 프리미엄', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '쏘나타 (DN8)',
+            powertrain: '일반',
+            startYear: 2019,
+            endYear: 2022,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 2.5 센슈어스', fuelType: '가솔린', transmission: '자동' },
+              { name: 'LPi 2.0 스마트', fuelType: 'LPG', transmission: '자동' },
+            ],
+          },
+          {
+            name: '쏘나타 디 엣지 (DN8)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 2.5 N라인', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '쏘나타 디 엣지 하이브리드 (DN8)',
+            powertrain: '하이브리드',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '하이브리드 2.0 프리미엄', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 2.0 인스퍼레이션', fuelType: '하이브리드', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '그랜저',
+        models: [
+          {
+            name: '그랜저 (IG)',
+            powertrain: '일반',
+            startYear: 2016,
+            endYear: 2018,
+            trims: [
+              { name: '가솔린 2.4 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.2 프리미엄', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '그랜저 하이브리드 (IG)',
+            powertrain: '하이브리드',
+            startYear: 2017,
+            endYear: 2018,
+            trims: [{ name: '하이브리드 2.4 스마트', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 그랜저 (IG)',
+            powertrain: '일반',
+            startYear: 2019,
+            endYear: 2021,
+            trims: [
+              { name: '가솔린 2.4 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 3.3 캘리그래피', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 그랜저 하이브리드 (IG)',
             powertrain: '하이브리드',
             startYear: 2019,
+            endYear: 2021,
+            trims: [
+              { name: '하이브리드 2.4 스마트', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 2.4 캘리그래피', fuelType: '하이브리드', transmission: '자동' },
+            ],
+          },
+          {
+            name: '그랜저 (GN7)',
+            powertrain: '일반',
+            startYear: 2022,
+            endYear: 2025,
+            trims: [
+              { name: '가솔린 2.5 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 3.5 캘리그래피', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '그랜저 하이브리드 (GN7)',
+            powertrain: '하이브리드',
+            startYear: 2022,
+            endYear: 2025,
+            trims: [
+              { name: '하이브리드 1.6 터보 프리미엄', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 1.6 터보 캘리그래피', fuelType: '하이브리드', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '싼타페',
+        models: [
+          {
+            name: '싼타페 (TM)',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 터보 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 싼타페 (TM)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [
+              { name: '가솔린 터보 2.5 프레스티지', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.2 캘리그래피', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 싼타페 하이브리드 (TM)',
+            powertrain: '하이브리드',
+            startYear: 2021,
+            endYear: 2022,
+            trims: [{ name: '하이브리드 1.6 터보 프레스티지', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '싼타페 (MX5)',
+            powertrain: '일반',
+            startYear: 2023,
             endYear: null,
-            trims: [{ name: '하이브리드 스마트', fuelType: '하이브리드', transmission: '자동' }],
+            trims: [
+              { name: '가솔린 터보 2.5 프레스티지', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 2.5 캘리그래피', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '싼타페 하이브리드 (MX5)',
+            powertrain: '하이브리드',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '하이브리드 1.6 터보 익스클루시브', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 1.6 터보 캘리그래피', fuelType: '하이브리드', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '투싼',
+        models: [
+          {
+            name: '투싼 (TL)',
+            powertrain: '일반',
+            startYear: 2015,
+            endYear: 2017,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.0 프레스티지', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            // 실제 공식 서브네임은 "더 뉴"가 아니라 그냥 "투싼"이었다(부산모터쇼 2018.06 공개) —
+            // model_groups 내 UNIQUE 제약 때문에 이름을 그대로 둘 수 없어 괄호로 구분했다.
+            name: '투싼 (TL 부분변경)',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 스포츠', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '투싼 (NX4)',
+            powertrain: '일반',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 N라인', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '투싼 하이브리드 (NX4)',
+            powertrain: '하이브리드',
+            startYear: 2020,
+            endYear: 2022,
+            trims: [{ name: '하이브리드 1.6 터보 모던', fuelType: '하이브리드', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 투싼 (NX4)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 터보 1.6 N라인', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 투싼 하이브리드 (NX4)',
+            powertrain: '하이브리드',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '하이브리드 1.6 터보 모던', fuelType: '하이브리드', transmission: '자동' },
+              { name: '하이브리드 1.6 터보 프레스티지', fuelType: '하이브리드', transmission: '자동' },
+            ],
           },
         ],
       },
