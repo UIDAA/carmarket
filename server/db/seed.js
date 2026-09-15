@@ -323,10 +323,10 @@ const CATALOG = [
     ],
   },
   {
-    // ⚠️ 미검증: 이 브랜드 블록은 웹 검색(WebSearch) 예산 소진으로 실제 검증을 받지 못하고
-    // 기억(모델 지식)만으로 채운 초안이다. 다음 세션에서 웹 검색으로 세대코드/출시연도/
-    // 페이스리프트 시점/트림명을 반드시 재확인할 것. 상세 인계 내용은
-    // docs/superpowers/notes/2026-09-15-catalog-seed-handoff.md 참고.
+    // 웹 검증: 최초 초안은 기억으로 작성됐으나, WebSearch 예산 소진 후 WebFetch로
+    // 위키백과/나무위키를 교차 확인해 재검증함. 이 과정에서 더 뉴 K5(JF) 종료연도 오류(2021→2019,
+    // K5(DL3)와 겹치던 버그) 수정, 스포티지 더 볼드(QL) 기간 교차 확인, 스포티지 하이브리드(NQ5)는
+    // 출처 상충으로 제외 처리함. 상세 내용은 docs/superpowers/notes/2026-09-15-catalog-seed-handoff.md.
     manufacturer: '기아',
     modelGroups: [
       {
@@ -353,7 +353,7 @@ const CATALOG = [
             name: '더 뉴 K5 (JF)',
             powertrain: '일반',
             startYear: 2018,
-            endYear: 2021,
+            endYear: 2019, // 웹 검증: DL3(2019.11) 출시로 대체 — 최초 초안의 2021은 K5(DL3)와 겹치는 오류였음
             trims: [
               { name: '가솔린 2.0 스마트', fuelType: '가솔린', transmission: '자동' },
               { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
@@ -502,13 +502,8 @@ const CATALOG = [
               { name: '가솔린 터보 1.6 GT라인', fuelType: '가솔린', transmission: 'DCT' },
             ],
           },
-          {
-            name: '스포티지 하이브리드 (NQ5)',
-            powertrain: '하이브리드',
-            startYear: 2021,
-            endYear: 2023,
-            trims: [{ name: '하이브리드 1.6 터보 시그니처', fuelType: '하이브리드', transmission: '자동' }],
-          },
+          // 스포티지 하이브리드(NQ5) 행은 최초 출시 연도가 출처마다 상충해(2021~2022 vs
+          // 공식 페이스리프트 2024) 규칙에 따라 제외함 — 재검증 시 기아 공식 보도자료로 확인 필요.
           {
             name: '더 뉴 스포티지 (NQ5)',
             powertrain: '일반',
