@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { type Car, type CarInput, createCar, getCar, resolveImageUrl, updateCar } from '../api/cars';
 import { ApiError } from '../api/client';
 import Header from '../components/Header';
+import RegistrationOcrUpload from '../components/RegistrationOcrUpload';
+import { type OcrResult } from '../api/ocr';
 import VehiclePicker, { type VehiclePickerValue } from '../components/VehiclePicker';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -17,6 +19,11 @@ export default function CarFormPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const [vehicle, setVehicle] = useState<VehiclePickerValue>({});
+  const [vehicleAutoFilled, setVehicleAutoFilled] = useState(false);
+  const [autoFilledYear, setAutoFilledYear] = useState(false);
+  const [autoFilledMonth, setAutoFilledMonth] = useState(false);
+  const [ocrCandidates, setOcrCandidates] = useState<NonNullable<OcrResult['catalogMatch']>['candidates']>(undefined);
+  const [candidateTrimIds, setCandidateTrimIds] = useState<number[]>([]);
   const [loadedCar, setLoadedCar] = useState<Car | null>(null);
   const [firstRegisteredYear, setFirstRegisteredYear] = useState<number | ''>('');
   const [firstRegisteredMonth, setFirstRegisteredMonth] = useState<number | ''>('');
@@ -50,6 +57,44 @@ export default function CarFormPage() {
     const file = e.target.files?.[0] ?? null;
     setPhoto(file);
     setPreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  function handleOcrResult(result: OcrResult) {
+    if (result.ocrStatus !== 'ok') return;
+
+    if (result.firstRegisteredYear) {
+      setFirstRegisteredYear(result.firstRegisteredYear);
+      setAutoFilledYear(true);
+    }
+    if (result.firstRegisteredMonth) {
+      setFirstRegisteredMonth(result.firstRegisteredMonth);
+      setAutoFilledMonth(true);
+    }
+
+    const match = result.catalogMatch;
+    if (match?.confidence === 'strong') {
+      setVehicle({
+        manufacturerId: match.manufacturerId,
+        modelGroupId: match.modelGroupId,
+        modelId: match.modelId,
+      });
+      setVehicleAutoFilled(true);
+      setOcrCandidates(undefined);
+    } else if (match?.confidence === 'ambiguous') {
+      setOcrCandidates(match.candidates);
+    }
+
+    setCandidateTrimIds(result.trimHint?.candidateTrimIds ?? []);
+  }
+
+  function applyOcrCandidate(candidate: NonNullable<typeof ocrCandidates>[number]) {
+    setVehicle({
+      manufacturerId: candidate.manufacturerId,
+      modelGroupId: candidate.modelGroupId,
+      modelId: candidate.modelId,
+    });
+    setVehicleAutoFilled(true);
+    setOcrCandidates(undefined);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -91,19 +136,46 @@ export default function CarFormPage() {
           </p>
         )}
 
+        <RegistrationOcrUpload onResult={handleOcrResult} />
+
         <div className="field">
-          <label>차종 선택</label>
+          <label>
+            차종 선택
+            {vehicleAutoFilled && <span className="auto-badge">자동 인식됨</span>}
+          </label>
           {isEdit && loadedCar && (
             <p style={{ marginBottom: 10, fontSize: 13, color: 'var(--text-soft)' }}>
               현재 선택: {loadedCar.brand} {loadedCar.model} · {loadedCar.fuel_type} · {loadedCar.transmission}
             </p>
           )}
-          <VehiclePicker value={vehicle} onChange={setVehicle} />
+          <VehiclePicker
+            value={vehicle}
+            onChange={(next) => {
+              setVehicle(next);
+              setVehicleAutoFilled(false);
+            }}
+            highlightTrimIds={candidateTrimIds}
+          />
+          {ocrCandidates && ocrCandidates.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-soft)', marginBottom: 6 }}>이 중 하나인 것 같아요:</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {ocrCandidates.map((c) => (
+                  <button key={c.modelId} type="button" className="chip" onClick={() => applyOcrCandidate(c)}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="row2">
-          <div className="field">
-            <label htmlFor="field-first-registered-year">최초등록연도</label>
+          <div className={`field${autoFilledYear ? ' field--auto-filled' : ''}`}>
+            <label htmlFor="field-first-registered-year">
+              최초등록연도
+              {autoFilledYear && <span className="auto-badge">자동</span>}
+            </label>
             <input
               id="field-first-registered-year"
               className="input"
@@ -111,12 +183,18 @@ export default function CarFormPage() {
               min={1990}
               max={CURRENT_YEAR}
               value={firstRegisteredYear}
-              onChange={(e) => setFirstRegisteredYear(e.target.value ? Number(e.target.value) : '')}
+              onChange={(e) => {
+                setFirstRegisteredYear(e.target.value ? Number(e.target.value) : '');
+                setAutoFilledYear(false);
+              }}
               required
             />
           </div>
-          <div className="field">
-            <label htmlFor="field-first-registered-month">최초등록월 (선택)</label>
+          <div className={`field${autoFilledMonth ? ' field--auto-filled' : ''}`}>
+            <label htmlFor="field-first-registered-month">
+              최초등록월 (선택)
+              {autoFilledMonth && <span className="auto-badge">자동</span>}
+            </label>
             <input
               id="field-first-registered-month"
               className="input"
@@ -124,7 +202,10 @@ export default function CarFormPage() {
               min={1}
               max={12}
               value={firstRegisteredMonth}
-              onChange={(e) => setFirstRegisteredMonth(e.target.value ? Number(e.target.value) : '')}
+              onChange={(e) => {
+                setFirstRegisteredMonth(e.target.value ? Number(e.target.value) : '');
+                setAutoFilledMonth(false);
+              }}
             />
           </div>
         </div>
