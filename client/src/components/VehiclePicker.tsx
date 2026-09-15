@@ -25,9 +25,10 @@ interface Props {
   value: VehiclePickerValue;
   onChange: (next: VehiclePickerValue) => void;
   hideEmpty?: boolean;
+  highlightTrimIds?: number[];
 }
 
-export default function VehiclePicker({ value, onChange, hideEmpty = false }: Props) {
+export default function VehiclePicker({ value, onChange, hideEmpty = false, highlightTrimIds }: Props) {
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [modelGroups, setModelGroups] = useState<ModelGroup[]>([]);
   const [models, setModels] = useState<CatalogModel[]>([]);
@@ -151,6 +152,7 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false }: Pr
         <option value="">트림 선택</option>
         {visible(trims).map((t) => (
           <option key={t.id} value={t.id}>
+            {highlightTrimIds?.includes(t.id) ? '⭐ ' : ''}
             {t.name} ({t.count})
           </option>
         ))}
