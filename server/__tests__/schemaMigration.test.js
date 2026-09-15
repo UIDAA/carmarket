@@ -188,7 +188,7 @@ describe('post-seed reconciliation of legacy "기본" cars', () => {
     const afterModel = db
       .prepare('SELECT models.* FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
       .get(afterCar.trim_id);
-    expect(afterModel.name).toBe('CN7');
+    expect(afterModel.name).toBe('아반떼 (CN7)');
 
     const fallbackModelCount = db.prepare("SELECT COUNT(*) AS c FROM models WHERE name = '기본'").get().c;
     expect(fallbackModelCount).toBe(0);
@@ -246,7 +246,7 @@ describe('post-seed reconciliation of legacy "기본" cars', () => {
     const model = db
       .prepare('SELECT models.* FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
       .get(car.trim_id);
-    expect(model.name).toBe('1세대'); // 실제 시드된 토레스 세대로 옮겨졌는지 확인
+    expect(model.name).toBe('토레스 (J100)'); // 실제 시드된 토레스 세대로 옮겨졌는지 확인
 
     const fallbackCount = db.prepare("SELECT COUNT(*) AS c FROM models WHERE name = '기본'").get().c;
     expect(fallbackCount).toBe(0);
@@ -280,7 +280,7 @@ describe('post-seed reconciliation of legacy "기본" cars', () => {
     const model = db
       .prepare('SELECT models.name AS name FROM trims JOIN models ON models.id = trims.model_id WHERE trims.id = ?')
       .get(car.trim_id);
-    expect(model.name).toBe('CN7');
+    expect(model.name).toBe('아반떼 (CN7)');
   });
 });
 
