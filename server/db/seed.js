@@ -627,6 +627,7 @@ const CATALOG = [
     ],
   },
   {
+    // 웹 검증: WebSearch 예산 소진 후 WebFetch로 위키백과/나무위키 교차 확인.
     manufacturer: 'KG모빌리티',
     nameLegacy: '쌍용',
     modelGroups: [
@@ -634,11 +635,173 @@ const CATALOG = [
         name: '토레스',
         models: [
           {
-            name: '1세대',
+            name: '토레스 (J100)',
             powertrain: '일반',
             startYear: 2022,
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 1.5 터보 T5', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 1.5 터보 T7', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '토레스 EVX',
+            powertrain: '전기',
+            startYear: 2023,
+            endYear: 2023,
+            trims: [{ name: '전기 E7', fuelType: '전기', transmission: '자동' }],
+          },
+          {
+            name: '더 뉴 토레스 (PF1)',
+            powertrain: '일반',
+            startYear: 2024,
             endYear: null,
-            trims: [{ name: '가솔린 1.5 터보 T7', fuelType: '가솔린', transmission: '자동' }],
+            trims: [
+              { name: '가솔린 1.5 터보 T5', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 1.5 터보 TL7', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 토레스 EVX',
+            powertrain: '전기',
+            startYear: 2024,
+            endYear: null,
+            trims: [{ name: '전기 E7', fuelType: '전기', transmission: '자동' }],
+          },
+        ],
+      },
+      {
+        name: '렉스턴 스포츠',
+        models: [
+          {
+            name: '렉스턴 스포츠(+칸) (Q200)',
+            powertrain: '일반',
+            startYear: 2018,
+            endYear: 2020,
+            trims: [
+              { name: '디젤 2.2 와일드', fuelType: '디젤', transmission: '자동' },
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 렉스턴 스포츠 (Q215)',
+            powertrain: '일반',
+            startYear: 2021,
+            endYear: 2021, // 월 불확실: 페이스리프트 주기가 짧아 정확한 종료월 미확인, 연도는 확실
+            trims: [
+              { name: '디젤 2.2 와일드', fuelType: '디젤', transmission: '자동' },
+              { name: '디젤 2.2 노블레스', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '뉴 렉스턴 스포츠 (Q250)',
+            powertrain: '일반',
+            startYear: 2022,
+            endYear: 2022, // 월 불확실: 페이스리프트 주기가 짧아 정확한 종료월 미확인, 연도는 확실
+            trims: [
+              { name: '디젤 2.2 프레스티지', fuelType: '디젤', transmission: '자동' },
+              { name: '디젤 2.2 노블레스', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '렉스턴 스포츠 칸 쿨멘 (Q260)',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '디젤 2.2 와일드', fuelType: '디젤', transmission: '자동' },
+              { name: '디젤 2.2 노블레스', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '코란도',
+        models: [
+          {
+            name: '코란도 C (C200)',
+            powertrain: '일반',
+            startYear: 2011,
+            endYear: 2013,
+            trims: [
+              { name: '가솔린 2.0 CVS', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.0 CVX', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '뉴 코란도 C (C200)',
+            powertrain: '일반',
+            startYear: 2013,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 2.0 KX', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 2.0 RX', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '코란도 (C300)',
+            powertrain: '일반',
+            startYear: 2019,
+            endYear: 2025,
+            trims: [
+              { name: '가솔린 1.5 터보 샤이니', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.6 C7', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '코란도 EV (E130)',
+            powertrain: '전기',
+            startYear: 2024,
+            endYear: 2025, // 월 불확실: 정확한 종료월 미확인, 연도는 확실
+            trims: [
+              { name: '전기 E3', fuelType: '전기', transmission: '자동' },
+              { name: '전기 E5', fuelType: '전기', transmission: '자동' },
+            ],
+          },
+        ],
+      },
+      {
+        name: '티볼리',
+        models: [
+          {
+            name: '티볼리',
+            powertrain: '일반',
+            startYear: 2015,
+            endYear: 2017,
+            trims: [
+              { name: '가솔린 1.6 TX', fuelType: '가솔린', transmission: '자동' },
+              { name: '디젤 1.6 VX', fuelType: '디젤', transmission: '자동' },
+            ],
+          },
+          {
+            name: '티볼리 아머',
+            powertrain: '일반',
+            startYear: 2017,
+            endYear: 2019,
+            trims: [
+              { name: '가솔린 1.6 VX', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 1.6 기어에디션', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '베리 뉴 티볼리',
+            powertrain: '일반',
+            startYear: 2019,
+            endYear: 2023,
+            trims: [
+              { name: '가솔린 1.6 V3', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 1.6 V5', fuelType: '가솔린', transmission: '자동' },
+            ],
+          },
+          {
+            name: '더 뉴 티볼리',
+            powertrain: '일반',
+            startYear: 2023,
+            endYear: null,
+            trims: [
+              { name: '가솔린 1.6 V1', fuelType: '가솔린', transmission: '자동' },
+              { name: '가솔린 1.6 V3', fuelType: '가솔린', transmission: '자동' },
+            ],
           },
         ],
       },
