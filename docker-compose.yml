@@ -8,6 +8,7 @@ services:
       PORT: 4000
       JWT_SECRET: ${JWT_SECRET:-carmarket-docker-dev-secret}
       DB_PATH: /app/data/carmarket.sqlite
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     volumes:
       - db-data:/app/data
       - uploads-data:/app/uploads
