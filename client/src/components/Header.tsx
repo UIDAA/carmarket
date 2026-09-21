@@ -22,7 +22,7 @@ export default function Header() {
               {user.nickname.slice(0, 1)}
             </Link>
             <Link to="/cars/new" className="btn-primary">
-              + 매물 등록
+              + 내 차 팔기
             </Link>
           </>
         ) : (
