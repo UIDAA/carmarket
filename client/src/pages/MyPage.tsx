@@ -1,12 +1,43 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { type Car, deleteCar, getMyCars } from '../api/cars';
+import { type Car, deleteCar, getMyCars, resolveImageUrl } from '../api/cars';
 import { listFavorites, removeFavorite } from '../api/favorites';
 import { type ChatRoom, listChatRooms } from '../api/chat';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 
 type Tab = 'listings' | 'favorites' | 'chats';
+
+function CarThumb({ car }: { car: Car }) {
+  const imageUrl = resolveImageUrl(car.image_url);
+  return (
+    <div
+      style={{
+        width: 72,
+        height: 56,
+        borderRadius: 'var(--radius-sm)',
+        background: 'var(--muted-soft)',
+        flexShrink: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {imageUrl ? (
+        <img src={imageUrl} alt={car.display_title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
+          <path
+            d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"
+            strokeLinejoin="round"
+          />
+          <circle cx="12" cy="13" r="3.2" />
+        </svg>
+      )}
+    </div>
+  );
+}
 
 const TAB_LABELS: Record<Tab, string> = {
   listings: '내 매물',
@@ -77,18 +108,10 @@ export default function MyPage() {
             <ul>
               {myCars.map((car) => (
                 <li key={car.id} className="list-card">
-                  <div
-                    style={{
-                      width: 72,
-                      height: 56,
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--muted-soft)',
-                      flexShrink: 0,
-                    }}
-                  />
+                  <CarThumb car={car} />
                   <div style={{ flex: 1 }}>
                     <Link to={`/cars/${car.id}`} style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
-                      {car.title}
+                      {car.display_title}
                     </Link>
                     <div style={{ color: 'var(--text-soft)', fontSize: 13, marginTop: 2 }}>
                       {(car.price / 10000).toLocaleString()}만원 · {car.status}
@@ -110,18 +133,10 @@ export default function MyPage() {
             <ul>
               {favorites.map((car) => (
                 <li key={car.id} className="list-card">
-                  <div
-                    style={{
-                      width: 72,
-                      height: 56,
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--muted-soft)',
-                      flexShrink: 0,
-                    }}
-                  />
+                  <CarThumb car={car} />
                   <div style={{ flex: 1 }}>
                     <Link to={`/cars/${car.id}`} style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
-                      {car.title}
+                      {car.display_title}
                     </Link>
                     <div style={{ color: 'var(--text-soft)', fontSize: 13, marginTop: 2 }}>
                       {(car.price / 10000).toLocaleString()}만원
