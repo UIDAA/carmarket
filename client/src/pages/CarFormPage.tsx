@@ -140,185 +140,195 @@ export default function CarFormPage() {
   return (
     <div>
       <Header />
-      <form onSubmit={handleSubmit} className="page" style={{ maxWidth: 760, paddingTop: 40, paddingBottom: 60 }}>
-        <h1 style={{ fontSize: 24, marginBottom: 28 }}>{isEdit ? '매물 수정하기' : '매물 등록하기'}</h1>
+      <form onSubmit={handleSubmit} className="page" style={{ maxWidth: 760, paddingTop: 40, paddingBottom: 100 }}>
+        <h1 style={{ fontSize: 24, marginBottom: 4 }}>{isEdit ? '매물 수정하기' : '매물 등록하기'}</h1>
+        <p style={{ color: 'var(--text-soft)', fontSize: 14, margin: '0 0 28px' }}>
+          등록증 사진 한 장이면 차종·연식이 자동으로 채워져요.
+        </p>
         {error && (
           <p role="alert" style={{ marginBottom: 18 }}>
             {error}
           </p>
         )}
 
-        <RegistrationOcrUpload onResult={handleOcrResult} />
-
-        <div className="field">
-          <label>
-            차종 선택
-            {vehicleAutoFilled && <span className="auto-badge">자동 인식됨</span>}
-          </label>
-          {isEdit && loadedCar && (
-            <p style={{ marginBottom: 10, fontSize: 13, color: 'var(--text-soft)' }}>
-              현재 선택: {loadedCar.brand} {loadedCar.model} · {loadedCar.fuel_type} · {loadedCar.transmission}
-            </p>
-          )}
-          <VehiclePicker
-            value={vehicle}
-            onChange={(next) => {
-              setVehicle(next);
-              setVehicleAutoFilled(false);
-            }}
-            highlightTrimIds={candidateTrimIds}
-          />
-          {ocrCandidates && ocrCandidates.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <p style={{ fontSize: 13, color: 'var(--text-soft)', marginBottom: 6 }}>이 중 하나인 것 같아요:</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {ocrCandidates.map((c) => (
-                  <button key={c.modelId} type="button" className="chip" onClick={() => applyOcrCandidate(c)}>
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="section">
+          <RegistrationOcrUpload onResult={handleOcrResult} />
         </div>
 
-        <div className="row2">
-          <div className={`field${autoFilledYear ? ' field--auto-filled' : ''}`}>
-            <label htmlFor="field-first-registered-year">
-              최초등록연도
-              {autoFilledYear && <span className="auto-badge">자동</span>}
+        <div className="section">
+          <div className="section-head">
+            <span className="section-num">1</span>
+            <span className="section-title">차량 정보</span>
+          </div>
+
+          <div className="field">
+            <label>
+              차종 선택
+              {vehicleAutoFilled && <span className="auto-badge">자동 인식됨</span>}
             </label>
+            {isEdit && loadedCar && (
+              <p style={{ marginBottom: 10, fontSize: 13, color: 'var(--text-soft)' }}>
+                현재 선택: {loadedCar.brand} {loadedCar.model} · {loadedCar.fuel_type} · {loadedCar.transmission}
+              </p>
+            )}
+            <VehiclePicker
+              value={vehicle}
+              onChange={(next) => {
+                setVehicle(next);
+                setVehicleAutoFilled(false);
+              }}
+              highlightTrimIds={candidateTrimIds}
+            />
+            {ocrCandidates && ocrCandidates.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-soft)', marginBottom: 6 }}>이 중 하나인 것 같아요:</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {ocrCandidates.map((c) => (
+                    <button key={c.modelId} type="button" className="chip" onClick={() => applyOcrCandidate(c)}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="row2">
+            <div className={`field${autoFilledYear ? ' field--auto-filled' : ''}`}>
+              <label htmlFor="field-first-registered-year">
+                최초등록연도
+                {autoFilledYear && <span className="auto-badge">자동</span>}
+              </label>
+              <input
+                id="field-first-registered-year"
+                className="input"
+                type="number"
+                min={1990}
+                max={CURRENT_YEAR}
+                value={firstRegisteredYear}
+                onChange={(e) => {
+                  setFirstRegisteredYear(clampToMin(e.target.value, 1990));
+                  setAutoFilledYear(false);
+                }}
+                required
+              />
+            </div>
+            <div className={`field${autoFilledMonth ? ' field--auto-filled' : ''}`}>
+              <label htmlFor="field-first-registered-month">
+                최초등록월 (선택)
+                {autoFilledMonth && <span className="auto-badge">자동</span>}
+              </label>
+              <input
+                id="field-first-registered-month"
+                className="input"
+                type="number"
+                min={1}
+                max={12}
+                value={firstRegisteredMonth}
+                onChange={(e) => {
+                  setFirstRegisteredMonth(clampToMin(e.target.value, 1));
+                  setAutoFilledMonth(false);
+                }}
+              />
+            </div>
+          </div>
+          <div className="field">
+            <label htmlFor="field-model-year">연형 (선택, 최초등록연도와 다를 때만)</label>
             <input
-              id="field-first-registered-year"
+              id="field-model-year"
               className="input"
               type="number"
               min={1990}
               max={CURRENT_YEAR}
-              value={firstRegisteredYear}
-              onChange={(e) => {
-                setFirstRegisteredYear(clampToMin(e.target.value, 1990));
-                setAutoFilledYear(false);
-              }}
-              required
+              value={modelYear}
+              onChange={(e) => setModelYear(clampToMin(e.target.value, 1990))}
             />
           </div>
-          <div className={`field${autoFilledMonth ? ' field--auto-filled' : ''}`}>
-            <label htmlFor="field-first-registered-month">
-              최초등록월 (선택)
-              {autoFilledMonth && <span className="auto-badge">자동</span>}
-            </label>
-            <input
-              id="field-first-registered-month"
-              className="input"
-              type="number"
-              min={1}
-              max={12}
-              value={firstRegisteredMonth}
-              onChange={(e) => {
-                setFirstRegisteredMonth(clampToMin(e.target.value, 1));
-                setAutoFilledMonth(false);
-              }}
-            />
-          </div>
-        </div>
-        <div className="field">
-          <label htmlFor="field-model-year">연형 (선택, 최초등록연도와 다를 때만)</label>
-          <input
-            id="field-model-year"
-            className="input"
-            type="number"
-            min={1990}
-            max={CURRENT_YEAR}
-            value={modelYear}
-            onChange={(e) => setModelYear(clampToMin(e.target.value, 1990))}
-          />
         </div>
 
-        <div className="field">
-          <label htmlFor="photo">매물 사진</label>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <div
-              style={{
-                width: 180,
-                height: 130,
-                borderRadius: 'var(--radius)',
-                background: 'var(--muted-soft)',
-                flexShrink: 0,
-                overflow: 'hidden',
-              }}
-            >
-              {displayImageUrl && (
-                <img
-                  src={displayImageUrl}
-                  alt="매물 사진 미리보기"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        <div className="section">
+          <div className="section-head">
+            <span className="section-num">2</span>
+            <span className="section-title">사진</span>
+            <span className="section-desc">최대 5MB, JPG/PNG</span>
+          </div>
+          <div className="photo-row">
+            <div className="photo-preview">
+              {displayImageUrl && <img src={displayImageUrl} alt="매물 사진 미리보기" />}
+            </div>
+            <label htmlFor="photo" className="photo-upload-area">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5">
+                <path
+                  d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"
+                  strokeLinejoin="round"
                 />
-              )}
-            </div>
-            <div
-              style={{
-                border: '1.5px dashed var(--border)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '20px 24px',
-                flex: 1,
-                textAlign: 'center',
-                color: 'var(--text-soft)',
-                fontSize: 13,
-              }}
-            >
-              <input id="photo" type="file" accept="image/*" onChange={handlePhotoChange} />
-              <div style={{ marginTop: 8 }}>JPG, PNG (최대 5MB)</div>
-            </div>
+                <circle cx="12" cy="13" r="3.2" />
+              </svg>
+              <span>클릭해서 사진 선택</span>
+            </label>
+            <input id="photo" type="file" accept="image/*" onChange={handlePhotoChange} className="visually-hidden-input" />
           </div>
         </div>
 
-        <div className="row2">
-          <div className="field">
-            <label htmlFor="field-mileage">주행거리(km)</label>
-            <input
-              id="field-mileage"
-              className="input"
-              type="number"
-              min={0}
-              value={mileage}
-              onChange={(e) => setMileage(clampToMin(e.target.value, 0))}
-              required
-            />
+        <div className="section">
+          <div className="section-head">
+            <span className="section-num">3</span>
+            <span className="section-title">가격 및 지역</span>
+          </div>
+          <div className="row2">
+            <div className="field">
+              <label htmlFor="field-mileage">주행거리(km)</label>
+              <input
+                id="field-mileage"
+                className="input"
+                type="number"
+                min={0}
+                value={mileage}
+                onChange={(e) => setMileage(clampToMin(e.target.value, 0))}
+                required
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="field-price">가격(원)</label>
+              <input
+                id="field-price"
+                className="input"
+                type="number"
+                min={0}
+                value={price}
+                onChange={(e) => setPrice(clampToMin(e.target.value, 0))}
+                required
+              />
+            </div>
           </div>
           <div className="field">
-            <label htmlFor="field-price">가격(원)</label>
-            <input
-              id="field-price"
+            <label htmlFor="field-region">지역</label>
+            <select
+              id="field-region"
               className="input"
-              type="number"
-              min={0}
-              value={price}
-              onChange={(e) => setPrice(clampToMin(e.target.value, 0))}
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
               required
-            />
+            >
+              <option value="">지역 선택</option>
+              {SIDO_LIST.map((sido) => (
+                <option key={sido} value={sido}>
+                  {sido}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-        <div className="field">
-          <label htmlFor="field-region">지역</label>
-          <select
-            id="field-region"
-            className="input"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            required
-          >
-            <option value="">지역 선택</option>
-            {SIDO_LIST.map((sido) => (
-              <option key={sido} value={sido}>
-                {sido}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="field-description">상세설명</label>
+
+        <div className="section">
+          <div className="section-head">
+            <span className="section-num">4</span>
+            <span className="section-title">상세 설명</span>
+            <span className="section-desc">선택</span>
+          </div>
           <textarea
             id="field-description"
+            aria-label="상세설명"
             className="input"
             rows={5}
             style={{ resize: 'vertical' }}
@@ -327,13 +337,15 @@ export default function CarFormPage() {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-          <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>
-            취소
-          </button>
-          <button type="submit" className="btn-primary">
-            {isEdit ? '수정하기' : '등록하기'}
-          </button>
+        <div className="form-bottom-bar">
+          <div className="form-bottom-bar-inner">
+            <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>
+              취소
+            </button>
+            <button type="submit" className="btn-primary">
+              {isEdit ? '수정하기' : '등록하기'}
+            </button>
+          </div>
         </div>
       </form>
     </div>

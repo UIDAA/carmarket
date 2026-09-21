@@ -43,12 +43,29 @@ export default function RegistrationOcrUpload({ onResult }: Props) {
 
   return (
     <div className="ocr-upload">
-      <div className="ocr-upload-header">
-        <strong>등록증으로 자동 입력 (선택)</strong>
+      <div className="ocr-upload-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M12 16V4M12 4l-4 4M12 4l4 4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" strokeLinecap="round" />
+        </svg>
       </div>
-      <input type="file" accept="image/*" onChange={handleChange} disabled={loading} />
-      {loading && <p style={{ color: 'var(--text-soft)', fontSize: 13, marginTop: 6 }}>인식 중...</p>}
-      {message && !loading && <p style={{ fontSize: 13, marginTop: 6 }}>{message}</p>}
+      <div className="ocr-upload-body">
+        <div className="ocr-upload-title">등록증으로 자동 입력</div>
+        <div className="ocr-upload-sub">자동차등록증 사진을 올려주세요 (선택)</div>
+        {loading && <p className="ocr-upload-status">인식 중...</p>}
+        {message && !loading && <p className="ocr-upload-status">{message}</p>}
+      </div>
+      <label htmlFor="ocr-photo-input" className={`upload-btn${loading ? ' upload-btn--disabled' : ''}`}>
+        사진 선택
+      </label>
+      <input
+        id="ocr-photo-input"
+        type="file"
+        accept="image/*"
+        onChange={handleChange}
+        disabled={loading}
+        className="visually-hidden-input"
+      />
     </div>
   );
 }
