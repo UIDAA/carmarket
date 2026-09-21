@@ -15,3 +15,4 @@ server/uploads/*
 .env
 .env.*
 !.env.example
+ocr-test-samples/
