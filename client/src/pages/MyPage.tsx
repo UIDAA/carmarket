@@ -48,11 +48,17 @@ const TAB_LABELS: Record<Tab, string> = {
 export default function MyPage() {
   const { user, logout } = useAuth();
   const [searchParams] = useSearchParams();
-  const initialTab = (searchParams.get('tab') as Tab | null) ?? 'listings';
-  const [tab, setTab] = useState<Tab>(initialTab in TAB_LABELS ? initialTab : 'listings');
+  const [tab, setTab] = useState<Tab>('listings');
   const [myCars, setMyCars] = useState<Car[]>([]);
   const [favorites, setFavorites] = useState<Car[]>([]);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
+
+  // 헤더의 "찜한 매물"/"채팅" 링크는 이미 /mypage에 있을 때 리마운트 없이
+  // 쿼리스트링만 바꾸므로, tab을 마운트 시 한 번만 읽으면 그 이후 클릭이 반영되지 않는다.
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab') as Tab | null;
+    if (requestedTab && requestedTab in TAB_LABELS) setTab(requestedTab);
+  }, [searchParams]);
 
   useEffect(() => {
     if (tab === 'listings') getMyCars().then(setMyCars);
