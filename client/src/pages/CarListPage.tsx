@@ -13,6 +13,23 @@ function SearchIcon() {
   );
 }
 
+function HeroCarIllustration() {
+  return (
+    <svg width="220" height="140" viewBox="0 0 220 140" fill="none" aria-hidden="true">
+      <ellipse cx="110" cy="122" rx="90" ry="10" fill="rgba(0,0,0,0.15)" />
+      <path d="M20 96 L34 60 Q42 46 60 46 L150 46 Q168 46 176 60 L190 96 Z" fill="#ffffff" />
+      <path d="M58 50 L70 26 Q74 20 82 20 L128 20 Q136 20 140 26 L152 50 Z" fill="#ffffff" opacity="0.92" />
+      <path d="M72 28 L82 26 L82 46 L64 46 Z" fill="#f0813f" opacity="0.5" />
+      <path d="M148 28 L138 26 L138 46 L156 46 Z" fill="#f0813f" opacity="0.5" />
+      <rect x="20" y="90" width="170" height="10" rx="5" fill="#e8e8e8" />
+      <circle cx="58" cy="102" r="16" fill="#2b2b2b" />
+      <circle cx="58" cy="102" r="6" fill="#cfcfcf" />
+      <circle cx="156" cy="102" r="16" fill="#2b2b2b" />
+      <circle cx="156" cy="102" r="6" fill="#cfcfcf" />
+    </svg>
+  );
+}
+
 const RECENT_SEARCHES_KEY = 'carmarket:recentSearches';
 
 interface RecentSearch {
@@ -63,12 +80,35 @@ export default function CarListPage() {
   return (
     <div>
       <Header />
-      <div className="page" style={{ paddingTop: 40, paddingBottom: 60 }}>
+
+      <section className="hero">
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <h1 className="hero-title">
+              믿을 수 있는
+              <br />
+              중고차 직거래, 중고차마당
+            </h1>
+            <p className="hero-sub">
+              등록증 자동 인식으로 매물 등록은 더 쉽게,
+              <br />
+              실시간 채팅으로 거래는 더 빠르게.
+            </p>
+          </div>
+          <div className="hero-art">
+            <HeroCarIllustration />
+          </div>
+        </div>
+      </section>
+
+      <div className="search-card">
         <button className="search-entry" onClick={() => setFilterOpen(true)}>
           <SearchIcon />
           <span>어떤 차를 찾고 있나요?</span>
         </button>
+      </div>
 
+      <div className="page" style={{ paddingTop: 0, paddingBottom: 60 }}>
         {popular.length > 0 && (
           <div style={{ marginTop: 32 }}>
             <h2 style={{ fontSize: 16, marginBottom: 12 }}>인기 브랜드</h2>
