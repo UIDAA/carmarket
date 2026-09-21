@@ -73,7 +73,7 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
         <option value="">브랜드 선택</option>
         {visible(manufacturers).map((m) => (
           <option key={m.id} value={m.id}>
-            {formatManufacturerLabel(m)} ({m.count})
+            {formatManufacturerLabel(m)}
           </option>
         ))}
       </select>
@@ -92,7 +92,7 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
         <option value="">모델 선택</option>
         {visible(modelGroups).map((g) => (
           <option key={g.id} value={g.id}>
-            {g.name} ({g.count})
+            {g.name}
           </option>
         ))}
       </select>
@@ -112,7 +112,7 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
         <option value="">세대 선택</option>
         {visible(models).map((m) => (
           <option key={m.id} value={m.id}>
-            {m.name} ({m.startYear}~{m.endYear ?? ''}) ({m.count})
+            {m.name} ({m.startYear}~{m.endYear ?? ''})
           </option>
         ))}
       </select>
@@ -133,7 +133,7 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
         <option value="">연식 선택</option>
         {visible(years).map((y) => (
           <option key={y.year} value={y.year}>
-            {y.year}년 ({y.count})
+            {y.year}년
           </option>
         ))}
       </select>
@@ -148,7 +148,7 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
         {visible(trims).map((t) => (
           <option key={t.id} value={t.id}>
             {highlightTrimIds?.includes(t.id) ? '⭐ ' : ''}
-            {t.name} ({t.count})
+            {t.name}
           </option>
         ))}
       </select>
