@@ -36,7 +36,10 @@ describe('gemini 서비스', () => {
     await expect(recognizeRegistration(Buffer.from('x'), 'image/png')).rejects.toMatchObject(
       new GeminiError('rate_limited')
     );
-    expect(warnSpy).toHaveBeenCalledWith('[gemini-ocr] rate limited', expect.objectContaining({ at: expect.any(String) }));
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[gemini-ocr] failed',
+      expect.objectContaining({ reason: 'rate_limited', at: expect.any(String) })
+    );
     warnSpy.mockRestore();
   });
 
@@ -64,9 +67,10 @@ describe('gemini 서비스', () => {
     );
   });
 
-  it('정상 응답을 파싱해서 4개 필드를 돌려준다', async () => {
+  it('정상 응답을 파싱해서 5개 필드를 돌려준다', async () => {
     process.env.GEMINI_API_KEY = 'test-key';
     const payload = {
+      readabilityIssue: null,
       firstRegisteredDate: '2022-03-15',
       modelName: '아반떼(CN7)',
       displacementCc: 1598,
@@ -81,5 +85,31 @@ describe('gemini 서비스', () => {
 
     const result = await recognizeRegistration(Buffer.from('x'), 'image/png');
     expect(result).toEqual(payload);
+  });
+
+  it('readabilityIssue가 blurry/wrong_document면 그대로 반환하고, 그 외 값은 null로 정규화한다', async () => {
+    process.env.GEMINI_API_KEY = 'test-key';
+    const { recognizeRegistration } = loadService();
+
+    async function withIssue(issue) {
+      global.fetch = jest.fn().mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify({ readabilityIssue: issue, firstRegisteredDate: null, modelName: null, displacementCc: null, fuelType: null }) }],
+              },
+            },
+          ],
+        }),
+      });
+      return recognizeRegistration(Buffer.from('x'), 'image/png');
+    }
+
+    expect((await withIssue('blurry')).readabilityIssue).toBe('blurry');
+    expect((await withIssue('wrong_document')).readabilityIssue).toBe('wrong_document');
+    expect((await withIssue('nonsense')).readabilityIssue).toBeNull();
   });
 });

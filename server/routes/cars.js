@@ -1,7 +1,7 @@
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
-const { ocrUpload } = require('../middleware/ocrUpload');
+const { ocrUploadOrFail } = require('../middleware/ocrUpload');
 const { recognizeRegistration, GeminiError } = require('../services/gemini');
 const { matchCatalog, matchTrimHint } = require('../services/registrationMatcher');
 
@@ -392,7 +392,7 @@ function carsRouter(db) {
     res.json(withDisplayTitle(car));
   });
 
-  router.post('/ocr', requireAuth, ocrUpload.single('photo'), async (req, res) => {
+  router.post('/ocr', requireAuth, ocrUploadOrFail, async (req, res) => {
     if (!req.file) return res.status(400).json({ error: '이미지를 첨부해주세요.' });
 
     let recognized;
@@ -401,6 +401,10 @@ function carsRouter(db) {
     } catch (err) {
       const reason = err instanceof GeminiError ? err.reason : 'network';
       return res.json({ ocrStatus: 'failed', reason });
+    }
+
+    if (recognized.readabilityIssue) {
+      return res.json({ ocrStatus: 'failed', reason: recognized.readabilityIssue });
     }
 
     const result = { ocrStatus: 'ok' };

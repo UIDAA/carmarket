@@ -56,6 +56,42 @@ describe('POST /api/cars/ocr', () => {
     expect(res.body).toEqual({ ocrStatus: 'failed', reason: 'rate_limited' });
   });
 
+  it('첨부 파일이 15MB를 넘으면 500이 아니라 200 + ocrStatus:failed(file_too_large)로 응답한다', async () => {
+    const { app } = buildTestApp();
+    const token = await registerAndLogin(app);
+    const oversized = Buffer.alloc(16 * 1024 * 1024, 1);
+    recognizeRegistration.mockClear();
+
+    const res = await request(app)
+      .post('/api/cars/ocr')
+      .set('Authorization', `Bearer ${token}`)
+      .attach('photo', oversized, { filename: 'reg.png', contentType: 'image/png' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ocrStatus: 'failed', reason: 'file_too_large' });
+    expect(recognizeRegistration).not.toHaveBeenCalled();
+  });
+
+  it('readabilityIssue가 blurry/wrong_document면 catalogMatch 없이 ocrStatus:failed로 응답한다', async () => {
+    const { app } = buildTestApp();
+    const token = await registerAndLogin(app);
+    recognizeRegistration.mockResolvedValue({
+      readabilityIssue: 'blurry',
+      firstRegisteredDate: null,
+      modelName: null,
+      displacementCc: null,
+      fuelType: null,
+    });
+
+    const res = await request(app)
+      .post('/api/cars/ocr')
+      .set('Authorization', `Bearer ${token}`)
+      .attach('photo', Buffer.from('fake'), 'reg.png');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ocrStatus: 'failed', reason: 'blurry' });
+  });
+
   it('모델그룹을 못 찾으면 catalogMatch.confidence가 not_found다', async () => {
     const { app, db } = buildTestApp();
     const token = await registerAndLogin(app);
