@@ -1,5 +1,6 @@
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
+const { withDisplayTitle } = require('../utils/displayTitle');
 
 function favoritesRouter(db) {
   const router = express.Router();
@@ -8,13 +9,14 @@ function favoritesRouter(db) {
   router.get('/', (req, res) => {
     const favorites = db
       .prepare(
-        `SELECT cars.* FROM favorites
+        `SELECT cars.*, trims.name AS trim_name FROM favorites
          JOIN cars ON cars.id = favorites.car_id
+         JOIN trims ON trims.id = cars.trim_id
          WHERE favorites.user_id = ?
          ORDER BY favorites.created_at DESC`
       )
       .all(req.userId);
-    res.json(favorites);
+    res.json(favorites.map(withDisplayTitle));
   });
 
   router.post('/:carId', (req, res) => {

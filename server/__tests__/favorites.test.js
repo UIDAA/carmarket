@@ -30,6 +30,8 @@ describe('favorites', () => {
     expect(listRes.status).toBe(200);
     expect(listRes.body).toHaveLength(1);
     expect(listRes.body[0].id).toBe(carId);
+    // 마이페이지 찜 목록이 CarThumb/display_title을 쓰므로 이 필드가 빠지면 사진·제목이 안 뜬다.
+    expect(listRes.body[0].display_title).toMatch(/\(2021년식\)$/);
   });
 
   it('removes a favorite', async () => {
