@@ -9,6 +9,13 @@ import VehiclePicker, { type VehiclePickerValue } from '../components/VehiclePic
 
 const CURRENT_YEAR = new Date().getFullYear();
 
+// 숫자 입력란(연도/월/주행거리/가격 등)은 min을 지정해도 브라우저에 따라 음수 타이핑 자체는
+// 막아주지 않는 경우가 있어, state에 반영하기 전에 직접 하한을 clamp한다.
+function clampToMin(rawValue: string, min: number): number | '' {
+  if (rawValue === '') return '';
+  return Math.max(min, Number(rawValue));
+}
+
 const SIDO_LIST = [
   '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
   '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
@@ -189,7 +196,7 @@ export default function CarFormPage() {
               max={CURRENT_YEAR}
               value={firstRegisteredYear}
               onChange={(e) => {
-                setFirstRegisteredYear(e.target.value ? Number(e.target.value) : '');
+                setFirstRegisteredYear(clampToMin(e.target.value, 1990));
                 setAutoFilledYear(false);
               }}
               required
@@ -208,7 +215,7 @@ export default function CarFormPage() {
               max={12}
               value={firstRegisteredMonth}
               onChange={(e) => {
-                setFirstRegisteredMonth(e.target.value ? Number(e.target.value) : '');
+                setFirstRegisteredMonth(clampToMin(e.target.value, 1));
                 setAutoFilledMonth(false);
               }}
             />
@@ -220,8 +227,10 @@ export default function CarFormPage() {
             id="field-model-year"
             className="input"
             type="number"
+            min={1990}
+            max={CURRENT_YEAR}
             value={modelYear}
-            onChange={(e) => setModelYear(e.target.value ? Number(e.target.value) : '')}
+            onChange={(e) => setModelYear(clampToMin(e.target.value, 1990))}
           />
         </div>
 
@@ -270,8 +279,9 @@ export default function CarFormPage() {
               id="field-mileage"
               className="input"
               type="number"
+              min={0}
               value={mileage}
-              onChange={(e) => setMileage(e.target.value === '' ? '' : Number(e.target.value))}
+              onChange={(e) => setMileage(clampToMin(e.target.value, 0))}
               required
             />
           </div>
@@ -281,8 +291,9 @@ export default function CarFormPage() {
               id="field-price"
               className="input"
               type="number"
+              min={0}
               value={price}
-              onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
+              onChange={(e) => setPrice(clampToMin(e.target.value, 0))}
               required
             />
           </div>

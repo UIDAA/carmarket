@@ -5,6 +5,13 @@ interface Props {
   onResult: (result: OcrResult) => void;
 }
 
+function failureMessage(reason: OcrResult['reason']): string {
+  if (reason === 'blurry') return '사진이 흐려서 읽지 못했어요. 글씨가 잘 보이도록 더 선명하게 다시 찍어주세요.';
+  if (reason === 'wrong_document') return '자동차등록증 사진이 맞는지 확인해주세요. 등록증 전체가 나오게 다시 찍어주세요.';
+  if (reason === 'file_too_large') return '사진 용량이 너무 커요(15MB 이하). 더 작은 사진으로 다시 시도해주세요.';
+  return '서버 오류로 자동 인식에 실패했어요. 잠시 후 다시 시도하거나 직접 입력해주세요.';
+}
+
 export default function RegistrationOcrUpload({ onResult }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -19,7 +26,7 @@ export default function RegistrationOcrUpload({ onResult }: Props) {
     try {
       const result = await recognizeRegistration(file);
       if (result.ocrStatus === 'failed') {
-        setMessage('자동 인식을 할 수 없어요. 직접 입력해주세요.');
+        setMessage(failureMessage(result.reason));
       } else if (result.catalogMatch?.confidence === 'not_found') {
         setMessage('이 차는 목록에 없을 수 있어요. 차종은 직접 선택해주세요.');
       } else {
@@ -27,7 +34,7 @@ export default function RegistrationOcrUpload({ onResult }: Props) {
       }
       onResult(result);
     } catch {
-      setMessage('자동 인식을 할 수 없어요. 직접 입력해주세요.');
+      setMessage(failureMessage('network'));
       onResult({ ocrStatus: 'failed', reason: 'network' });
     } finally {
       setLoading(false);
@@ -38,9 +45,6 @@ export default function RegistrationOcrUpload({ onResult }: Props) {
     <div className="ocr-upload">
       <div className="ocr-upload-header">
         <strong>등록증으로 자동 입력 (선택)</strong>
-        <span className="ocr-upload-notice">
-          등록증 이미지는 자동 인식을 위해 Google Gemini API로 전송되며, 서버에는 저장되지 않습니다.
-        </span>
       </div>
       <input type="file" accept="image/*" onChange={handleChange} disabled={loading} />
       {loading && <p style={{ color: 'var(--text-soft)', fontSize: 13, marginTop: 6 }}>인식 중...</p>}

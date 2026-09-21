@@ -17,7 +17,14 @@ export interface OcrCatalogMatch {
 
 export interface OcrResult {
   ocrStatus: 'ok' | 'failed';
-  reason?: 'not_configured' | 'rate_limited' | 'network' | 'unparseable';
+  reason?:
+    | 'not_configured'
+    | 'rate_limited'
+    | 'network'
+    | 'unparseable'
+    | 'blurry'
+    | 'wrong_document'
+    | 'file_too_large';
   firstRegisteredYear?: number;
   firstRegisteredMonth?: number;
   catalogMatch?: OcrCatalogMatch;
