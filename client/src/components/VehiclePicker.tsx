@@ -64,10 +64,9 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
   }
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+    <div className="vehicle-picker">
       <select
         className="input"
-        style={{ width: 'auto' }}
         value={value.manufacturerId ?? ''}
         onChange={(e) => onChange({ manufacturerId: e.target.value ? Number(e.target.value) : undefined })}
       >
@@ -81,7 +80,6 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
 
       <select
         className="input"
-        style={{ width: 'auto' }}
         value={value.modelGroupId ?? ''}
         disabled={!value.manufacturerId}
         onChange={(e) =>
@@ -101,7 +99,6 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
 
       <select
         className="input"
-        style={{ width: 'auto' }}
         value={value.modelId ?? ''}
         disabled={!value.modelGroupId}
         onChange={(e) =>
@@ -122,7 +119,6 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
 
       <select
         className="input"
-        style={{ width: 'auto' }}
         value={value.year ?? ''}
         disabled={!value.modelId}
         onChange={(e) =>
@@ -144,7 +140,6 @@ export default function VehiclePicker({ value, onChange, hideEmpty = false, high
 
       <select
         className="input"
-        style={{ width: 'auto' }}
         value={value.trimId ?? ''}
         disabled={!value.modelId}
         onChange={(e) => onChange({ ...value, trimId: e.target.value ? Number(e.target.value) : undefined })}

@@ -774,6 +774,25 @@ textarea:focus {
   gap: 16px;
 }
 
+/* 차종 선택 — 고정 폭 그리드라 선택된 옵션 텍스트가 길어져도 줄바꿈되지 않고
+   각 select 안에서 말줄임(...)으로 잘린다. */
+.vehicle-picker {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.vehicle-picker select {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .vehicle-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* auth tabs */
 .tab {
   flex: 1;
